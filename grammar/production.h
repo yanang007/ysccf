@@ -15,9 +15,9 @@ public:
     inline static const stringType sAfterToken = L"";
 
     enum idType{
-        itSymbol,
-        itToken,
-        itReduced,
+        itSymbol, //非终结符
+        itToken,  //终结符
+        itReduced,//已归约
         itEmpty,
     };
 
@@ -30,6 +30,11 @@ public:
         bool isToken() const { return second == itToken; }
         bool isReduced() const { return second == itReduced; }
         bool isEmpty() const { return second == itEmpty; }
+
+        operator nodeType() const
+        {
+            return first;
+        }
     };
 
     using producedVecType = std::vector<producedType>;

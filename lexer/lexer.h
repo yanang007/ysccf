@@ -13,7 +13,11 @@ public:
     using tokenID = nodeType;
     using lexUnitInfo = lexUnitInfo;
     inline const static stringType tokenDefiner = L"%token";
+
+    //conflicts may occur when states amount are fairly huge
     inline const static tokenID fin = nodeNotExist;
+    inline const static tokenID null = fin - 1;
+    inline const static tokenID allRoads = fin - 2;
     using tokenUnit = tokenUnit;
 
     using tokenStream = tokenStream;

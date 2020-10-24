@@ -3,7 +3,7 @@
 
 #include "./grammar.h"
 
-std::pair<
+std::tuple<
     std::map<nodeType,std::set<lexer::tokenID>>,
     std::map<nodeType,std::set<lexer::tokenID>>
 >

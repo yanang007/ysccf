@@ -3,9 +3,7 @@
 #include <variant>
 #include <ctime>
 
-#define _SYNTAXTEST
-//#define _REGTEST
-//#define _USE_QWINDOW
+#include "./base/base.h"
 
 #ifdef _REGTEST
 #include "tests/regGrammarTest.h"

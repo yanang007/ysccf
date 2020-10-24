@@ -372,7 +372,7 @@ void LR0Grammar::fillTable(const std::vector<LR0ItemSet> &stateVec, const std::v
                 else{
                     table.setAction(
                         i,
-                        LRTable::allRoads,
+                        lexer::allRoads,
                         item.production(),
                         LRTable::ateReduce
                     );

@@ -6,7 +6,7 @@
 #include <map>
 #include <iostream>
 
-//#define _USE_QT
+#include "./configs/config.h"
 
 typedef size_t nodeType;
 typedef wchar_t charType;

@@ -1,0 +1,5 @@
+#cmakedefine _SYNTAXTEST
+#cmakedefine _REGTEST
+#cmakedefine _USE_QT
+#cmakedefine _USE_QWINDOW
+

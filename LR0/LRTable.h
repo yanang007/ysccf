@@ -19,8 +19,6 @@ public:
     inline const static stringType signs[] = {
         L"S",L"r",L"acc"
     };
-    inline const static lexer::tokenID allRoads = lexer::fin - 1;
-    //conflicts may occur when states amount are fairly huge
 
     using rowNoType = nodeType;
     struct actionType{
@@ -69,7 +67,7 @@ public:
             try {
                 return actions[r].at(t);
             } catch (std::out_of_range e) {
-                return actions[r].at(allRoads);
+                return actions[r].at(lexer::allRoads);
                 //return actions[r].at(t);
             }
         //}
