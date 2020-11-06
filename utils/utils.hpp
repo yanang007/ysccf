@@ -237,7 +237,7 @@ std::basic_string<_Elem,_Traits,_Alloc>&
 
 #ifdef _WIN32
 #include <Windows.h>
-BOOL IsObjectOnStack(LPVOID pObject)
+inline BOOL IsObjectOnStack(LPVOID pObject)
 {
     INT nStackValue(0);
 

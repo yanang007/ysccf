@@ -166,6 +166,7 @@ struct range
     _T _start,_end,_step;
 };
 
+#undef max
 template <typename _ContT>
 struct enumerate
 {
