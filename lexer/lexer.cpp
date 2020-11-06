@@ -44,11 +44,11 @@ lexer::tokenID lexer::newToken(const stringType& expr,bool plain)
     return ret;
 }
 
-lexer::tokenStream lexer::tokenize(stringType text) const
+lexer::tokenStreamStorage lexer::tokenize(stringType text) const
 {
-    tokenStream tokenStream;
+    tokenStreamStorage tokenStreamStorage;
     if ( empty() ){
-        return tokenStream;
+        return tokenStreamStorage;
     }
     auto iter = text.begin();
     auto ender = text.end();
@@ -85,7 +85,7 @@ lexer::tokenStream lexer::tokenize(stringType text) const
                      size_t(iter - text.begin())
                    };
 
-        tokenStream.push_back({infoPack.id,infoPack});
+        tokenStreamStorage.push_back({infoPack.id,infoPack});
         iter += bestMatchSize;
     }
 
@@ -94,7 +94,7 @@ lexer::tokenStream lexer::tokenize(stringType text) const
                  size_t(iter - text.begin())
                };
 
-    tokenStream.push_back({infoPack.id,infoPack});
+    tokenStreamStorage.push_back({infoPack.id,infoPack});
 nruter:
-    return tokenStream;
+    return tokenStreamStorage;
 }

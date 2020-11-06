@@ -24,12 +24,12 @@ cLexer::tokenID cLexer::newToken(const stringType& expr,bool plain)
     return ret;
 }
 
-cLexer::tokenStream cLexer::tokenize(stringType text) const
+cLexer::tokenStreamStorage cLexer::tokenize(stringType text) const
 {
     //CaretAtOffset
-    tokenStream tokenStream;
+    tokenStreamStorage tokenStreamStorage;
     if ( empty() ){
-        return tokenStream;
+        return tokenStreamStorage;
     }
     auto qText = (text);
     auto pos = qText.cbegin();
@@ -76,7 +76,7 @@ cLexer::tokenStream cLexer::tokenize(stringType text) const
                      (size_t)(pos-qText.begin())
                    };
 
-        tokenStream.push_back({infoPack.id,infoPack});
+        tokenStreamStorage.push_back({infoPack.id,infoPack});
         pos += bestMatchSize;
     }
     infoPack = { stringType(),
@@ -84,7 +84,7 @@ cLexer::tokenStream cLexer::tokenize(stringType text) const
                  (size_t)(pos-qText.begin())
                };
 
-    tokenStream.push_back({infoPack.id,infoPack});
+    tokenStreamStorage.push_back({infoPack.id,infoPack});
 nruter:
-    return tokenStream;
+    return tokenStreamStorage;
 }

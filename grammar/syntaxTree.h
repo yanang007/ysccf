@@ -12,6 +12,7 @@
 class syntaxTree;
 using pSyntaxTree = std::shared_ptr<syntaxTree>;
 using pcSyntaxTree = std::shared_ptr<const syntaxTree>;
+using pSyntaxTreeStream = stdexp::generator<pSyntaxTree>;
 
 class syntaxTree
 {
@@ -28,9 +29,8 @@ public:
     const auto& children() const { return _children; }
     void appendChild(pSyntaxTree ptr) { _children.push_back(ptr); }
 
-
     ostreamType& toStream(ostreamType& os, const nameTable& symbolTable, const nameTable& tokenTable) const;
-    ostreamType& toStreamImpl(ostreamType& os, const nameTable& symbolTable, const nameTable& tokenTable,size_t depth) const;
+    ostreamType& toStreamImpl(ostreamType& os, const nameTable& symbolTable, const nameTable& tokenTable, size_t depth) const;
 
     const uniSym& data() const { return pData; }
 
@@ -38,6 +38,12 @@ protected:
     std::vector<pSyntaxTree> _children;
     uniSym pData;
 };
+
+template<typename... Args>
+pSyntaxTree make_pSyntaxTree(Args&&... args)
+{
+    return std::make_shared<syntaxTree>(std::forward<Args>(args)...);
+}
 
 void chainSyntaxVisit(pcSyntaxTree, std::function<int(pcSyntaxTree, nodeType)>);
 //breaks if _Func returns true

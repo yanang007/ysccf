@@ -11,18 +11,21 @@ grammarCompiler::grammarCompiler()
 
 grammarCompiler::~grammarCompiler()
 {
-    if( pGrammarParser != nullptr )
-        delete pGrammarParser;
 }
 
-lexer::tokenStream grammarCompiler::tokenize(stringType str)
+lexer::tokenStreamStorage grammarCompiler::tokenize(stringType str)
 {
     return compilerLexer().tokenize(str);
 }
 
-pSyntaxTree grammarCompiler::parse(const lexer::tokenStream& stream)
+pSyntaxTree grammarCompiler::parse(const lexer::tokenStreamStorage& stream)
 {
     return pGrammarParser->parse(stream);
+}
+
+pSyntaxTree grammarCompiler::parse(stringType input)
+{
+    return cfeOfCC.parse(input);
 }
 
 const grammar &grammarCompiler::construct(pSyntaxTree pRoot)
@@ -38,16 +41,13 @@ const grammar &grammarCompiler::construct(pSyntaxTree pRoot)
         return false;
     });
 
-    return customGrammarContainer;
+    return cfe.grammar();
 }
 
 
 void grammarCompiler::analyzeParser(pcSyntaxTree tree)
 {
-    customGrammarContainer.clear();
-    customLexer.clear();
-    customTokenTable.clear();
-    customSymbolTable.clear();
+    cfe.clear();
 
     chainSyntaxVisit(
         tree,
@@ -133,7 +133,7 @@ void grammarCompiler::parseRule(pcSyntaxTree tree)
             break;
 
         std::tie(producerID,decRet) = declareNewSymbol(producerName);
-        if(decRet == dsUndefined)
+        if(decRet == compilerFrontend::dsUndefined)
             break;
 
         ++iter;
@@ -185,7 +185,7 @@ void grammarCompiler::parseProduced(nodeType producer, pcSyntaxTree tree)
                     case vttVn:
                         std::tie(nodeCont,dsret) =
                                 declareNewSymbol(raw);
-                        if( dsret == dsUndefined )
+                        if( dsret == compilerFrontend::dsUndefined )
                             break;
                         prod.appendSymbol(nodeCont);
                         break;
@@ -195,7 +195,7 @@ void grammarCompiler::parseProduced(nodeType producer, pcSyntaxTree tree)
                         raw = replaced(raw,stringType(L"\\\""),stringType(L"\""));
                         std::tie(nodeCont,dsret) =
                                 declareNewToken(stringType(L"_s\"")+raw+L"\"",raw,true);
-                        if( dsret == dsUndefined )
+                        if( dsret == compilerFrontend::dsUndefined )
                             break;
                         prod.appendToken(nodeCont);
                         break;
@@ -203,13 +203,13 @@ void grammarCompiler::parseProduced(nodeType producer, pcSyntaxTree tree)
                         std::tie(nodeCont,dsret) =
                                 declareNewToken(raw,stringType(L"诶？!"));
                         switch ( dsret ) {
-                        case dsRedefined:
+                        case compilerFrontend::dsRedefined:
                             prod.appendToken(nodeCont);
                             break;
                         default:
                             errorReport(L"grammarCompiler::parseProduced()",
                                         stringType(L"token \"") + raw + L"\" not defined",
-                                        40);
+                                        ec_parser_TokenNotDefined);
                             break;
                         }
                         break;
@@ -221,7 +221,7 @@ void grammarCompiler::parseProduced(nodeType producer, pcSyntaxTree tree)
             return false;
         }
     );
-    customGrammarContainer.addProduction(producer,prod);
+    cfe.grammar().addProduction(producer,prod);
 }
 
 void grammarCompiler::parseOrProduced(nodeType producer, pcSyntaxTree tree)
@@ -244,7 +244,8 @@ grammarCompiler::
         const stringType& str,
         bool escaped)
 {
-    if ( !name.empty() && !str.empty() ){
+    return cfe.declareNewToken(name, str, escaped);
+    /*if ( !name.empty() && !str.empty() ){
         lexer::tokenID id;
         try {
             id = customTokenTable.at(name);
@@ -255,12 +256,13 @@ grammarCompiler::
         }
         return std::make_pair(id,dsRedefined);
     }
-    return std::make_pair(nodeNotExist,dsUndefined);
+    return std::make_pair(nodeNotExist,dsUndefined);*/
 }
 
 std::pair<nodeType, grammarCompiler::declareState> grammarCompiler::declareNewSymbol(const stringType &name)
 {
-    if ( !name.empty() ){
+    return cfe.declareNewSymbol(name);
+    /*if ( !name.empty() ){
         nodeType id;
 
         try {
@@ -272,7 +274,7 @@ std::pair<nodeType, grammarCompiler::declareState> grammarCompiler::declareNewSy
         }
         return std::make_pair(id,dsRedefined);
     }
-    return std::make_pair(nodeNotExist,dsUndefined);
+    return std::make_pair(nodeNotExist,dsUndefined);*/
 }
 
 std::pair<stringType, grammarCompiler::vtType> grammarCompiler::parseV(pcSyntaxTree tree)
@@ -360,56 +362,39 @@ stringType grammarCompiler::processStringConst(const stringType &sc)
 
 void grammarCompiler::initGrammarCompiler()
 {
-    _kwNull = lexer.newToken(LR"(\s*null\s*)");
-    _kwToken = lexer.newToken(LR"(\s*)" + lexer.tokenDefiner + LR"(\s+)");
-    _beforeVn = lexer.newToken(LR"(\s*<\s*)");
-    _afterVn = lexer.newToken(LR"(\s*>\s*)");
-    _stringConst = lexer.newToken(LR"("(\\.|[^"\\])*")");
-    _comment = lexer.newToken(LR"(\s*/\*.*\*/\s*)");
-    _deducer = lexer.newToken(LR"(\s*::=\s*)");
-    _delimiter = lexer.newToken(LR"(\s*;\s*)");
-    _or = lexer.newToken(LR"(\s*\|\s*)");
-    _space = lexer.newToken(LR"(\s*)");
-    _identifier = lexer.newToken(LR"([a-zA-Z_]\w*)");
+    std::tie(_kwNull, std::ignore) = cfeOfCC.declareNewToken(L"kwNull", LR"(null)");
+    std::tie(_kwToken, std::ignore) = cfeOfCC.declareNewToken(L"kwToken", lexer::tokenDefiner);
+    std::tie(_beforeVn, std::ignore) = cfeOfCC.declareNewToken(L"beforeVn", LR"(<)");
+    std::tie(_afterVn, std::ignore) = cfeOfCC.declareNewToken(L"afterVn", LR"(>)");
+    std::tie(_stringConst, std::ignore) = cfeOfCC.declareNewToken(L"stringConst", LR"("(\\.|[^"\\])*")");
+    std::tie(_comment, std::ignore) = cfeOfCC.declareNewToken(L"comment", LR"(/\*.*\*/)");
+    std::tie(_deducer, std::ignore) = cfeOfCC.declareNewToken(L"deducer", LR"(::=)");
+    std::tie(_delimiter, std::ignore) = cfeOfCC.declareNewToken(L"delimiter", LR"(;)");
+    std::tie(_or, std::ignore) = cfeOfCC.declareNewToken(L"or", LR"(\|)");
+    std::tie(_space, std::ignore) = cfeOfCC.declareNewToken(L"space", LR"(\s*)");
+    std::tie(_identifier, std::ignore) = cfeOfCC.declareNewToken(L"identifier", LR"([a-zA-Z_]\w*)");
+    std::tie(_beforeAttr, std::ignore) = cfeOfCC.declareNewToken(L"beforeAttr", LR"(\[)");
+    std::tie(_afterAttr, std::ignore) = cfeOfCC.declareNewToken(L"afterAttr", LR"(\])");
 
-    tokenTable.insert(L"kwNull",_kwNull);
-    tokenTable.insert(L"kwToken",_kwToken);
-    tokenTable.insert(L"beforeVn",_beforeVn);
-    tokenTable.insert(L"afterVn",_afterVn);
-    tokenTable.insert(L"stringConst",_stringConst);
-    tokenTable.insert(L"comment",_comment);
-    tokenTable.insert(L"deducer",_deducer);
-    tokenTable.insert(L"delimiter",_delimiter);
-    tokenTable.insert(L"or",_or);
-    tokenTable.insert(L"space",_space);
-    tokenTable.insert(L"identifier",_identifier);
+    cfeOfCC.setTokenToBeIgnored(_comment);
+    cfeOfCC.setTokenToBeIgnored(_space);
+
+    std::tie(_grammarDef, std::ignore) = cfeOfCC.declareNewSymbol(L"grammarDef");
+    std::tie(_statement, std::ignore) = cfeOfCC.declareNewSymbol(L"statement");
+    std::tie(_tokenDef, std::ignore) = cfeOfCC.declareNewSymbol(L"tokenDef");
+    std::tie(_rule, std::ignore) = cfeOfCC.declareNewSymbol(L"rule");
+    std::tie(_producer, std::ignore) = cfeOfCC.declareNewSymbol(L"producer");
+    std::tie(_produced, std::ignore) = cfeOfCC.declareNewSymbol(L"produced");
+    std::tie(_orProduced, std::ignore) = cfeOfCC.declareNewSymbol(L"orProduced");
+    std::tie(_V, std::ignore) = cfeOfCC.declareNewSymbol(L"V");
+    std::tie(_VnExpr, std::ignore) = cfeOfCC.declareNewSymbol(L"VnExpr");
+    std::tie(_Vn, std::ignore) = cfeOfCC.declareNewSymbol(L"Vn");
+    std::tie(_Vt, std::ignore) = cfeOfCC.declareNewSymbol(L"Vt");
+    std::tie(_attribute, std::ignore) = cfeOfCC.declareNewSymbol(L"attribute");
+    std::tie(_attributedStatement, std::ignore) = cfeOfCC.declareNewSymbol(L"attributedStatement");
 
     grammar syn;
-    _grammarDef = syn.newSymbol();
-    _statement = syn.newSymbol();
-    _tokenDef = syn.newSymbol();
-    _rule = syn.newSymbol();
-    _producer = syn.newSymbol();
-    _produced = syn.newSymbol();
-    _orProduced = syn.newSymbol();
-    _V = syn.newSymbol();
-    _VnExpr = syn.newSymbol();
-    _Vn = syn.newSymbol();
-    _Vt = syn.newSymbol();
-    syn.markStart(_grammarDef);
-
-    symbolTable.insert(L"grammarDef",_grammarDef);
-    symbolTable.insert(L"statement",_statement);
-    symbolTable.insert(L"tokenDef",_tokenDef);
-    symbolTable.insert(L"rule",_rule);
-    symbolTable.insert(L"producer",_producer);
-    symbolTable.insert(L"produced",_produced);
-    symbolTable.insert(L"orProduced",_orProduced);
-    symbolTable.insert(L"V",_V);
-    symbolTable.insert(L"VnExpr",_VnExpr);
-    symbolTable.insert(L"Vn",_Vn);
-    symbolTable.insert(L"Vt",_Vt);
-
+    cfeOfCC.markStart(_grammarDef);
 
 R"kk(
 %token kwNull "\s*null\s*"
@@ -425,7 +410,7 @@ R"kk(
 %token identifier "[a-zA-Z_]\w*"
 <grammarDef> ::= <grammarDef> <statement> | null;
 <statement> ::= <tokenDef> | <rule> | comment ;
-<tokenDef> ::= kwToken identifier space stringConst ;
+<tokenDef> ::= kwToken identifier stringConst ;  /// space deleted, need inspection
 <rule> ::= <producer> deducer <produced> <orProduced> delimiter ;
 <producer> ::= <VnExpr> ;
 <produced> ::= <produced> <V> | null;
@@ -433,117 +418,100 @@ R"kk(
 <V> ::= <VnExpr> | <Vt> ;
 <VnExpr> ::= beforeVn <Vn> afterVn ;
 <Vn> ::= identifier ;
-<Vt> ::= identifier | identifier space | kwNull | stringConst | stringConst space ;
+<Vt> ::= identifier | identifier | kwNull | stringConst | stringConst ;  /// space deleted, need inspection
 <ExtendedStart> ::= <grammarDef> ;
 )kk";
 
-    production prod;
     //0 <_grammarDef> ::= <_grammarDef> <_statement> | null;
-    prod.appendSymbol(_grammarDef)
+    grammar::productionID launcher;
+    cfeOfCC.grammar().addProduction(_grammarDef, &launcher)
+        .appendSymbol(_grammarDef)
         .appendSymbol(_statement);
-    auto launcher = syn.addProduction(_grammarDef,std::move(prod));
-    prod.clear();
 
-    syn.addProduction(_grammarDef,std::move(prod));
-
-    syn.markStart(launcher);
+    cfeOfCC.grammar().addProduction(_grammarDef);
 
     //1 <_statement> ::= <_tokenDef> | <_rule> | _comment ;
-    prod.appendSymbol(_tokenDef);
-    syn.addProduction(_statement,std::move(prod));
-    prod.clear();
+    cfeOfCC.grammar().addProduction(_statement)
+        .appendSymbol(_tokenDef);
 
-    prod.appendSymbol(_rule);
-    syn.addProduction(_statement,std::move(prod));
-    prod.clear();
+    cfeOfCC.grammar().addProduction(_statement)
+        .appendSymbol(_rule);
 
-    prod.appendToken(_comment);
-    syn.addProduction(_statement,std::move(prod));
-    prod.clear();
+    cfeOfCC.grammar().addProduction(_statement)
+        .appendToken(_comment);
 
-    //2 <_tokenDef> ::= _kwToken _identifier _space _stringConst;
-    prod.appendToken(_kwToken)
+    //2 <_tokenDef> ::= _kwToken _identifier _stringConst;
+    cfeOfCC.grammar().addProduction(_tokenDef)
+        .appendToken(_kwToken)
         .appendToken(_identifier)
-        .appendToken(_space)
         .appendToken(_stringConst);
-    syn.addProduction(_tokenDef,std::move(prod));
-    prod.clear();
 
     //3 <_rule> ::= <_producer> _deducer <_produced> <_orProduced> _delimiter ;
-    prod.appendSymbol(_producer)
+    cfeOfCC.grammar().addProduction(_rule)
+        .appendSymbol(_producer)
         .appendToken(_deducer)
         .appendSymbol(_produced)
         .appendSymbol(_orProduced)
         .appendToken(_delimiter);
-    syn.addProduction(_rule,std::move(prod));
-    prod.clear();
 
 
     //4 <_producer> ::= <_VnExpr>;
-    prod.appendSymbol(_VnExpr);
-    syn.addProduction(_producer,std::move(prod));
-    prod.clear();
+    cfeOfCC.grammar().addProduction(_producer)
+        .appendSymbol(_VnExpr);
 
     //5 <_produced> ::= <_produced> <_V> | null;
-    prod.appendSymbol(_produced)
+    cfeOfCC.grammar().addProduction(_produced)
+        .appendSymbol(_produced)
         .appendSymbol(_V);
-    syn.addProduction(_produced,std::move(prod));
-    prod.clear();
 
-    syn.addProduction(_produced,std::move(prod));
+    cfeOfCC.grammar().addProduction(_produced);
 
     //6  <_orProduced> ::= _or <_produced> <_orProduced> | null ;
-    prod.appendToken(_or)
+    cfeOfCC.grammar().addProduction(_orProduced)
+        .appendToken(_or)
         .appendSymbol(_produced)
         .appendSymbol(_orProduced);
-    syn.addProduction(_orProduced,std::move(prod));
-    prod.clear();
 
-    syn.addProduction(_orProduced,std::move(prod));
+    cfeOfCC.grammar().addProduction(_orProduced);
 
     //7 <_V> ::= <_VnExpr> | <_Vt> ;
-    prod.appendSymbol(_VnExpr);
-    syn.addProduction(_V,std::move(prod));
-    prod.clear();
-    prod.appendSymbol(_Vt);
-    syn.addProduction(_V,std::move(prod));
-    prod.clear();
+    cfeOfCC.grammar().addProduction(_V)
+        .appendSymbol(_VnExpr);
+
+    cfeOfCC.grammar().addProduction(_V)
+        .appendSymbol(_Vt);
 
     //8 <_VnExpr> ::= _beforeVn <_Vn> _afterVn;
-    prod.appendToken(_beforeVn)
+    cfeOfCC.grammar().addProduction(_VnExpr)
+        .appendToken(_beforeVn)
         .appendSymbol(_Vn)
         .appendToken(_afterVn);
-    syn.addProduction(_VnExpr,std::move(prod));
-    prod.clear();
 
     //9 <_Vn> ::= _identifier;
-    prod.appendToken(_identifier);
-    syn.addProduction(_Vn,std::move(prod));
-    prod.clear();
+    cfeOfCC.grammar().addProduction(_Vn)
+        .appendToken(_identifier);
 
-    //10 <_Vt> ::= _identifier | _identifier _space | _kwNull | _stringConst | _stringConst _space;
-    prod.appendToken(_identifier);
-    syn.addProduction(_Vt,std::move(prod));
-    prod.clear();
-    prod.appendToken(_identifier)
-        .appendToken(_space);
-    syn.addProduction(_Vt,std::move(prod));
-    prod.clear();
-    prod.appendToken(_kwNull);
-    syn.addProduction(_Vt,std::move(prod));
-    prod.clear();
-    prod.appendToken(_stringConst);
-    syn.addProduction(_Vt,std::move(prod));
-    prod.clear();
-    prod.appendToken(_stringConst)
-        .appendToken(_space);
-    syn.addProduction(_Vt,std::move(prod));
-    prod.clear();
+    //10 <_Vt> ::= _identifier | _identifier | _kwNull | _stringConst | _stringConst;
+    cfeOfCC.grammar().addProduction(_Vt)
+        .appendToken(_identifier);
 
-    lexer.toStream(std::wcout,tokenTable);
-    syn.toStream(std::wcout,symbolTable,tokenTable);
+    cfeOfCC.grammar().addProduction(_Vt)
+        .appendToken(_identifier);
 
-    pGrammarParser = new LR0Grammar(LR0Grammar::analyze(syn));
+    cfeOfCC.grammar().addProduction(_Vt)
+        .appendToken(_kwNull);
 
-    symbolTable.insert(L"ExtendedStart",_Vt+1);
+    cfeOfCC.grammar().addProduction(_Vt)
+        .appendToken(_stringConst);
+
+    cfeOfCC.grammar().addProduction(_Vt)
+        .appendToken(_stringConst);
+
+    cfeOfCC.toLexerStream(std::wcout);
+    cfeOfCC.toGrammarStream(std::wcout);
+
+    cfeOfCC.generateParser();
+    pGrammarParser = &cfeOfCC.parser();
+
+    //symbolTable.insert(L"ExtendedStart",_Vt+1);
 }

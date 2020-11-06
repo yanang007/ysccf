@@ -7,7 +7,7 @@
 #include "../utils/nameTable.h"
 
 //lexer using QRegex
-//to avoid lexer being to slow
+//to avoid lexer being too slow
 //faced with large charset
 class cLexer
 {
@@ -15,6 +15,7 @@ public:
     using tokenID = lexer::tokenID;
     using lexUnitInfo = lexer::lexUnitInfo;
     using tokenUnit = lexer::tokenUnit;
+    using tokenStreamStorage = lexer::tokenStreamStorage;
     using tokenStream = lexer::tokenStream;
     inline const static stringType tokenDefiner = lexer::tokenDefiner;
     inline const static tokenID fin = lexer::fin;
@@ -23,7 +24,7 @@ public:
     cLexer();
 
     tokenID newToken(const stringType &expr, bool plain = false);
-    tokenStream tokenize(stringType text) const;
+    tokenStreamStorage tokenize(stringType text) const;
 
     size_t size() const { return _tokens.size(); }
     bool empty() const { return size() == 0; }

@@ -144,6 +144,7 @@ std::tuple<
     // 这里存储对应first集（...）的直接子节点
     std::map<nodeType, std::set<nodeType>> firstSetRoots;
 
+    // 文章结束符加入起点的follow集
     tokenRoots[lexer::fin].insert(grmr.start());
     for (const auto& [producer, prods] : enumerate(grmr.deductions())) {
         for (const auto& prod : prods) {
@@ -210,33 +211,3 @@ std::tuple<
 
     return std::forward_as_tuple(first, follow);
 }
-
-/*
-/// find all nullable Vn-s
-/// 找到所有可为空的文法符号
-std::set<nodeType> nullableVnSet(const grammar & grmr)
-{
-    std::set<nodeType> nullables;
-    std::set<std::reference_wrapper<production>> rProds;
-    for( const auto& [producer,prods] : enumerate(grmr.deductions())){
-        for( const auto& prod : prods){
-
-            auto iter = prod.begin(),
-                 ender = prod.end();
-            while ( iter != ender &&
-                    iter->isSymbol()) {
-                if( !contains(nullables,iter->first) ){
-                    break;
-                }
-                ++iter;
-            }
-
-            if( iter == ender ){
-                nullables.insert(producer);
-            }
-        }
-    }
-
-    return nullables;
-}
-*/

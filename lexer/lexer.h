@@ -20,6 +20,8 @@ public:
     inline const static tokenID allRoads = fin - 2;
     using tokenUnit = tokenUnit;
 
+    using tokenStreamStorage = tokenStreamStorage;
+    using tokenStreamGrowingStorage = tokenStreamGrowingStorage;
     using tokenStream = tokenStream;
 
 public:
@@ -27,7 +29,7 @@ public:
     ~lexer();
 
     tokenID newToken(const stringType& expr,bool plain = false);
-    tokenStream tokenize(stringType text) const;
+    tokenStreamStorage tokenize(stringType text) const;
 
     size_t size() const { return _tokens.size(); }
     bool empty() const { return size() == 0; }

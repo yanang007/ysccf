@@ -4,6 +4,7 @@
 #include <vector>
 #include <ostream>
 #include <string>
+#include <deque>
 
 #include "../base/base.h"
 #include "../utils/nameTable.h"
@@ -34,10 +35,12 @@ struct tokenUnit{
     lexUnitInfo info;
 };
 
-
-class tokenStream : public std::vector<tokenUnit>
+class tokenStreamStorage : public std::vector<tokenUnit>
 {
 public:
+    using base = std::vector<tokenUnit>;
+    using base::base;
+
     ostreamType & toStream(ostreamType &os, const nameTable &tokenTable) const
     {
         for( const auto& [id,info]  : *this)
@@ -47,5 +50,10 @@ public:
         return os;
     }
 };
+
+using tokenStream = stdexp::generator<std::reference_wrapper<tokenUnit>>;
+
+
+using tokenStreamGrowingStorage = std::deque<tokenUnit>;
 
 #endif // TOKENSTREAM_H

@@ -44,10 +44,11 @@ void syntaxTreeWindow::initUI()
                             <<QStringLiteral("Type")
                 );
 
-    pBtnDefaultGrammar = new QPushButton(u8"编译器文法");
-    pBtnSimpleGrammar = new QPushButton(u8"题目文法");
-    pBtnConstruct = new QPushButton(u8"构建文法");
-    pChkChainOpt = new QCheckBox(u8"链式递归显示优化");
+    pBtnDefaultGrammar = new QPushButton("编译器文法");
+    pBtnSimpleGrammar = new QPushButton("题目文法");
+    pBtnConstruct = new QPushButton("构建文法");
+    pChkChainOpt = new QCheckBox("链式递归显示优化");
+
     pChkChainOpt->setCheckState(Qt::Checked);
 
     pMainLayout->addWidget(pGrammarRaw,0,0,7,4);
@@ -176,7 +177,7 @@ void syntaxTreeWindow::applySyntaxTreeToViewLinearImpl(QStandardItem *pItem, pcS
     });
 }
 
-void syntaxTreeWindow::applyDecoration(const lexer::tokenStream& stream, QTextEdit * pSrc)
+void syntaxTreeWindow::applyDecoration(const lexer::tokenStreamStorage& stream, QTextEdit * pSrc)
 {
     static bool isMerging = false;
     if( !isMerging ){
@@ -219,15 +220,22 @@ void syntaxTreeWindow::toParseAGrammar()
     }
 
     auto text = pGrammarRaw->document()->toPlainText().toStdWString();
-    grammarTokens = gm.tokenize(text);
+
+    auto syntaxtree = gm.parse(text);
+    applySyntaxTreeToView(syntaxtree,
+        gm.compilerSymbolTable(),
+        gm.compilerTokenTable(),
+        pChkChainOpt->checkState());
+
+    grammarTokens = gm.getLastTokenized(); //gm.tokenize(text);
     applyDecoration(grammarTokens,pGrammarRaw);
     isMerging = false;
 
-    auto syntaxtree = gm.parse(grammarTokens);
+    /*auto syntaxtree = gm.parse(grammarTokens);
     applySyntaxTreeToView(syntaxtree,
                           gm.compilerSymbolTable(),
                           gm.compilerTokenTable(),
-                          pChkChainOpt->checkState());
+                          pChkChainOpt->checkState());*/
     toExpandAll();
 
     isLastParsedAGrammar = true;
@@ -260,11 +268,11 @@ void syntaxTreeWindow::toParseByTheGrammar()
 
     LR0Grammar::parseStepVecType steps;
     auto syntaxtree = pCustomParser->parse(srcTokens,&steps);
-    pCustomParser->printParseStepVec(std::wcout,
+    /*pCustomParser->printParseStepVec(std::wcout,
                                      steps,
                                      srcTokens,
                                      gm.grammarSymbolTable(),
-                                     gm.grammarTokenTable());
+                                     gm.grammarTokenTable());*/
     applySyntaxTreeToView(syntaxtree,
                           gm.grammarSymbolTable(),
                           gm.grammarTokenTable(),

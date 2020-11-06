@@ -16,7 +16,7 @@
 #include "../LR0/LR0Grammar.h"
 #include "../lexer/tLexer.h"
 #include "../utils/nameTable.h"
-#include "grammarCompiler.h"
+#include "../grammarCompiler/grammarCompiler.h"
 
 class syntaxTreeWindow : public QMainWindow
 {
@@ -41,7 +41,7 @@ public:
     void applySyntaxTreeToViewLinearImpl(QStandardItem * pItem, pcSyntaxTree tree,
                                          const nameTable& symbolTable,
                                          const nameTable& tokenTable);
-    void applyDecoration(const lexer::tokenStream &stream, QTextEdit*);
+    void applyDecoration(const lexer::tokenStreamStorage &stream, QTextEdit*);
 public slots:
     void toParseAGrammar();
     void toParseByTheGrammar();
@@ -67,37 +67,11 @@ protected:
 
     grammarCompiler gm;
 
-/*
-    qLexer lexer;
-    qLexer::tokenID
-        _kwNull,_kwToken,
-        _beforeVn,_afterVn,
-        _stringConst,_comment,
-        _deducer,_delimiter,_or,_space,
-        _identifier;
-
-    LR0Grammar* pGrammarParser;
-    nodeType _grammarDef,
-            _statement,
-            _tokenDef,
-            _rule,_producer,_produced,_orProduced,
-            _V,
-            _VnExpr,_Vn,
-            _Vt;
-    nameTable tokenTable;
-    nameTable symbolTable;
-
-    grammar customGrammarContainer;
-    LR0Grammar* pCustomParser;
-    qLexer customLexer;
-    nameTable customTokenTable;
-    nameTable customSymbolTable;
-*/
     LR0Grammar* pCustomParser = nullptr;
     bijection<tLexer::tokenID,QColor> tokenColorTable;
 
-    tLexer::tokenStream grammarTokens;
-    tLexer::tokenStream srcTokens;
+    tLexer::tokenStreamStorage grammarTokens;
+    tLexer::tokenStreamStorage srcTokens;
 
     pSyntaxTree lastParsed;
     bool isLastParsedAGrammar = false;

@@ -5,6 +5,7 @@
 #include "../grammar/grammar.h"
 #include "../grammar/syntaxTree.h"
 #include "../LR0/LR0Grammar.h"
+#include "./compilerFrontend.h"
 
 class grammarCompiler
 {
@@ -13,29 +14,29 @@ public:
     ~grammarCompiler();
 
     void clear(){
-        customGrammarContainer.clear();
-        customLexer.clear();
-        customTokenTable.clear();
-        customSymbolTable.clear();
+        cfe.clear();
     }
 
-    lexer::tokenStream tokenize(stringType);
-    pSyntaxTree parse(const lexer::tokenStream &);
+    lexer::tokenStreamStorage tokenize(stringType);
+    pSyntaxTree parse(const lexer::tokenStreamStorage &);
+    pSyntaxTree parse(stringType);
     const grammar& construct(pSyntaxTree);
-    const grammar& lastConstruct() const { return customGrammarContainer; }
+    const grammar& lastConstruct() const { return cfe.grammar(); }
 
-    const tLexer& compilerLexer() const { return lexer; }
-    const tLexer& grammarLexer() const { return customLexer; }
+    const tLexer& compilerLexer() const { return cfeOfCC.lexer(); }
+    const tLexer& grammarLexer() const { return cfe.lexer(); }
 
-    const nameTable& compilerSymbolTable() const { return symbolTable; }
-    const nameTable& compilerTokenTable() const { return tokenTable; }
+    const nameTable& compilerSymbolTable() const { return cfeOfCC.symbolTable(); }
+    const nameTable& compilerTokenTable() const { return cfeOfCC.tokenTable(); }
 
-    const nameTable& grammarSymbolTable() const { return customSymbolTable; }
-    const nameTable& grammarTokenTable() const { return customTokenTable; }
+    const nameTable& grammarSymbolTable() const { return cfe.symbolTable(); }
+    const nameTable& grammarTokenTable() const { return cfe.tokenTable(); }
 
     const LR0Grammar& getCompilerGrammar() const { return *pGrammarParser; }
-protected:
 
+    lexer::tokenStreamStorage getLastTokenized() const { return cfeOfCC.getLastTokenized(); }
+
+protected:
     void analyzeParser(pcSyntaxTree tree);
     void parseStatement(pcSyntaxTree tree);
     void parseToken(pcSyntaxTree tree);
@@ -44,13 +45,7 @@ protected:
     void parseProduced(nodeType producer,pcSyntaxTree tree);
     void parseOrProduced(nodeType producer,pcSyntaxTree tree);
 
-
-    enum declareState{
-        dsRedefined,
-        dsUndefined,
-        dsSuccess,
-    };
-
+    using declareState = compilerFrontend::declareState;
 
     std::pair<nodeType,declareState> declareNewToken(const stringType &name, const stringType &str,bool escaped = false);
     std::pair<nodeType,declareState> declareNewSymbol(const stringType &name);
@@ -79,13 +74,14 @@ protected:
     void initGrammarCompiler();
 
     LR0Grammar* pGrammarParser;
-    tLexer lexer;
+
     lexer::tokenID
         _kwNull,_kwToken,
         _beforeVn,_afterVn,
         _stringConst,_comment,
         _deducer,_delimiter,_or,_space,
-        _identifier;
+        _identifier,
+        _beforeAttr, _afterAttr;
 
     nodeType _grammarDef,
             _statement,
@@ -93,14 +89,12 @@ protected:
             _rule,_producer,_produced,_orProduced,
             _V,
             _VnExpr,_Vn,
-            _Vt;
-    nameTable tokenTable;
-    nameTable symbolTable;
+            _Vt,
+            _attribute,
+            _attributedStatement;
 
-    grammar customGrammarContainer;
-    tLexer customLexer;
-    nameTable customTokenTable;
-    nameTable customSymbolTable;
+    compilerFrontend cfe;
+    compilerFrontend cfeOfCC;
 };
 
 #endif // GRAMMARCOMPILER_H

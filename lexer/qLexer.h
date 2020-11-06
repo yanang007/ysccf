@@ -3,6 +3,7 @@
 
 #include <QRegExp>
 
+#include "../base/base.h"
 #include "lexer.h"
 #include "../utils/nameTable.h"
 
@@ -15,6 +16,7 @@ public:
     using tokenID = lexer::tokenID;
     using lexUnitInfo = lexer::lexUnitInfo;
     using tokenUnit = lexer::tokenUnit;
+    using tokenStreamStorage = lexer::tokenStreamStorage;
     using tokenStream = lexer::tokenStream;
     inline const static stringType tokenDefiner = lexer::tokenDefiner;
     inline const static tokenID fin = lexer::fin;
@@ -23,7 +25,8 @@ public:
     qLexer();
 
     tokenID newToken(const stringType &expr, bool plain = false);
-    tokenStream tokenize(stringType text) const;
+    tokenStreamStorage tokenize(stringType text) const;
+    tokenStream tokenizeCoro(stringType text) const;
 
     size_t size() const { return _tokens.size(); }
     bool empty() const { return size() == 0; }

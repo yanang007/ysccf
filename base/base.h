@@ -8,6 +8,10 @@
 
 #include "./configs/config.h"
 
+#ifdef _MSC_VER // msvc 解决qt中文乱码
+#pragma execution_character_set("utf-8")
+#endif
+
 typedef size_t nodeType;
 typedef wchar_t charType;
 typedef std::basic_string<charType> stringType;
@@ -33,5 +37,11 @@ constexpr size_t notFound = static_cast<size_t>(-1);
 #define UNUSED(expr) do { (void)(expr); } while (0)
 
 inline bool isEps(char c){ return c==eps; }
+
+
+#ifdef _MSC_VER
+#include <experimental/generator>
+namespace stdexp = std::experimental;
+#endif
 
 #endif // BASE_H

@@ -156,7 +156,7 @@ ostreamType &LR0Grammar::printStateVec(ostreamType &os,
 
 ostreamType &LR0Grammar::printParseStepVec(ostreamType& os,
         const LR0Grammar::parseStepVecType& parseStepVec,
-        const lexer::tokenStream &tokens,
+        const lexer::tokenStreamStorage &tokens,
         const nameTable &symbolTable,
         const nameTable &tokenTable,
         size_t foreseen)
@@ -236,7 +236,7 @@ LR0Grammar::~LR0Grammar()
 }
 
 pSyntaxTree LR0Grammar::parse(
-        const lexer::tokenStream &tokens,
+        const lexer::tokenStreamStorage &tokens,
         parseStepVecType* pParseStepVec)
 {
     auto iter = tokens.begin();
@@ -264,7 +264,7 @@ pSyntaxTree LR0Grammar::parse(
 
     auto processors = overloaded(
         [&pRoot](const lexer::tokenUnit* ptoken){
-            pRoot->appendChild(pSyntaxTree(new syntaxTree(ptoken)));
+            pRoot->appendChild(make_pSyntaxTree(ptoken));
         },
         [&treeStack,&pRoot]([[maybe_unused]]producerType producer){
             pRoot->appendChild(toppop(treeStack));
@@ -346,6 +346,122 @@ try {
         treeStack.push_back(pRoot);
 }
     return treeStack.back();
+}
+
+pSyntaxTreeStream LR0Grammar::parseCoro(lexer::tokenStream tokens, parseStepVecType* pParseStepVec)
+{
+    auto iter = tokens.begin();
+    auto ender = tokens.end();
+
+    std::deque<LRTable::rowNoType> stateStk;
+    std::deque<uniSymbol> symbolStk;
+    std::deque<pSyntaxTree> treeStack;
+
+    static_assert (isDequeLike<std::deque<LRTable::rowNoType>>::value, "");
+
+    stateStk.push_back(table.start());
+    //launcher state is assumed to be zero
+    //which is assured by LR0Grammar::analyze()
+    //any derived class should do the same
+    //or provide custom parser according to your definition
+
+    LRTable::rowNoType state;
+    const lexer::tokenUnit* pToken;
+    const production* pProd;
+    productionHandle hnd;
+    LRTable::actionTypeEnum type;
+    nodeType dest;
+    pSyntaxTree pRoot;
+
+    auto processors = overloaded(
+        [&pRoot](const lexer::tokenUnit* ptoken) {
+            pRoot->appendChild(make_pSyntaxTree(ptoken));
+        },
+        [&treeStack, &pRoot]([[maybe_unused]] producerType producer) {
+            pRoot->appendChild(toppop(treeStack));
+        }
+        );
+    size_t id = 0;
+    //<_moreRule> ::= _or <_VList> <_moreRule> | null ;
+    try {
+        while (iter != ender) {
+            state = stateStk.back();
+            pToken = new lexer::tokenUnit(iter->get());
+            auto act = table.getAction(state, pToken->id);
+            dest = act.dest;
+            type = act.type;
+            //auto [dest,type] = table.getAction(state,pToken->id);
+
+            if (pParseStepVec != nullptr) {
+                pParseStepVec->push_back(
+                    { stateStk,
+                     symbolStk,
+                     size_t(id),
+                     act,
+                     nodeNotExist }
+                );
+            }
+
+            switch (type) {
+            case LRTable::ateShift:
+                stateStk.push_back(dest);
+                symbolStk.push_back(pToken);
+                ++iter; ++id;
+
+                break;
+
+            case LRTable::ateReduce:
+                pProd = &productionAt(dest);
+                hnd = getHandle(dest);
+                pRoot.reset(new syntaxTree(hnd.producer));
+                for (size_t i = 0; i < pProd->size(); ++i) {
+                    stateStk.pop_back();
+                    auto sym = toppop(symbolStk);
+                    std::visit(processors, sym);
+                }
+                treeStack.push_back(pRoot);
+                symbolStk.push_back(hnd.producer);
+
+                state = stateStk.back();
+                dest = table.getGoto(state, hnd.producer);
+
+                if (pParseStepVec != nullptr) {
+                    pParseStepVec->back()._goto = dest;
+                }
+
+                stateStk.push_back(dest);
+
+                co_yield pRoot;
+
+                break;
+
+            case LRTable::ateAccept:
+                ++iter; ++id;
+                break;
+            }
+        }
+
+        if (treeStack.empty()) {
+            throw std::out_of_range("LR0Grammar::parse(): invalid input!");
+        }
+
+        co_yield treeStack.back();
+        co_return;
+    }
+    catch (std::out_of_range e) {
+        errorReport(L"LR0Grammar::parse()", L"the input is not accepted!", 19);
+        //the input is not accepted
+        pRoot.reset(new syntaxTree(nodeNotExist));
+        while (!symbolStk.empty()) {
+            auto sym = toppop(symbolStk);
+            std::visit(processors, sym);
+        }
+        while (!treeStack.empty()) {
+            pRoot->appendChild(toppop(treeStack));
+        }
+        treeStack.push_back(pRoot);
+    }
+    co_yield treeStack.back();
 }
 
 //SLR1

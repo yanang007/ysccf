@@ -6,6 +6,7 @@
 
 #include "../base/base.h"
 #include "production.h"
+#include "../utils/invokeful.hpp"
 
 typedef nodeType producerType;
 struct productionHandle
@@ -50,8 +51,9 @@ public:
 
     nodeType newSymbol();
     //引入一个新非终结符Vn
-    productionID addProduction(nodeType,production);
+    productionID addProduction(nodeType, production);
     productionID addProduction(deductionType);
+    production& addProduction(nodeType, productionID* p = nullptr);
 
     const production& productionAt(productionID id) const { return productionAt(getHandle(id)); }
     const production& productionAt(productionHandle hnd) const { auto&& [prder,prd] = hnd; return _deductions[prder][prd]; }
@@ -82,6 +84,10 @@ public:
     }
 
 protected:
+    production& productionAt(productionID id) { 
+        return deconstify(constify(this)->productionAt(getHandle(id)));
+    }
+
     rulesVecType _deductions;
     ruleIndicesType _index;
     ruleIdsType _iIndex;

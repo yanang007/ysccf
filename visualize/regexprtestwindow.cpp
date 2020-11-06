@@ -38,11 +38,11 @@ void regExprTestWindow::initUI()
     pText = new QTextEdit();
     pText->setAcceptRichText(false);
 
-    pBtnDefaultReg = new QPushButton(u8"默认正规式");
-    pBtnGenerate = new QPushButton(u8"生成自动机");
-    pBtnShowNFA = new QPushButton(u8"查看NFA");
-    pBtnShowDFA = new QPushButton(u8"查看DFA");
-    pBtnShowMinDFA = new QPushButton(u8"查看minDFA");
+    pBtnDefaultReg = new QPushButton("默认正规式");
+    pBtnGenerate = new QPushButton("生成自动机");
+    pBtnShowNFA = new QPushButton("查看NFA");
+    pBtnShowDFA = new QPushButton("查看DFA");
+    pBtnShowMinDFA = new QPushButton("查看minDFA");
 
     pMainLayout->addWidget(pRegLine,0,0,1,3);
     pMainLayout->addWidget(pText,1,0,3,3);

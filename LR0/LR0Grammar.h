@@ -39,7 +39,8 @@ public:
     //LR0Grammar& operator=(LR0Grammar&) = default;
     ~LR0Grammar();
 
-    pSyntaxTree parse(const lexer::tokenStream& tokens,parseStepVecType* pParseStepVec = nullptr);
+    pSyntaxTree parse(const lexer::tokenStreamStorage& tokens,parseStepVecType* pParseStepVec = nullptr);
+    pSyntaxTreeStream parseCoro(lexer::tokenStream tokens, parseStepVecType* pParseStepVec = nullptr);
     const LRTable& getTable() const { return table; }
 
     ostreamType& printStateVec(
@@ -50,7 +51,7 @@ public:
 
     ostreamType& printParseStepVec(ostreamType&,
             const parseStepVecType&,
-            const lexer::tokenStream& tokens,
+            const lexer::tokenStreamStorage& tokens,
             const nameTable& symbolTable,
             const nameTable& tokenTable,
             size_t foreseen = 5);

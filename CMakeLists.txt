@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 3.8)
 
 set(CMAKE_CXX_STANDARD 17)
 
-project (ysccf)
+project (ysccf CXX)
 
 # Qt support
 set(CMAKE_AUTOMOC ON)
@@ -20,8 +20,19 @@ configure_file(
     "${PROJECT_SOURCE_DIR}/base/configs/config.h"
     )
 
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  # using Clang
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  # using GCC
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+  # using Intel C++
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    ADD_COMPILE_OPTIONS(/std:c++latest)
+    ADD_COMPILE_OPTIONS(/await)
+endif()
+
 # find source files
-file(GLOB_RECURSE project_headers *.h)
+file(GLOB_RECURSE project_headers *.h *.hpp)
 file(GLOB_RECURSE project_cpps *.cpp)
 set(all_files ${project_headers} ${project_cpps})
 

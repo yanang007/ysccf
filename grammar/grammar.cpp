@@ -57,6 +57,15 @@ grammar::productionID grammar::addProduction(grammar::deductionType ded)
     return addProduction(ded.first,ded.second);
 }
 
+production& grammar::addProduction(nodeType producer, productionID* pid)
+{
+    auto ret = addProduction(producer, production());
+    if (pid != nullptr) {
+        *pid = ret;
+    }
+    return productionAt(ret);
+}
+
 ostreamType &grammar::toStream(ostreamType &os, const nameTable &symbolTable, const nameTable &tokenTable) const
 {
     nodeType n = 0;

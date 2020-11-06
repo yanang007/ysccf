@@ -235,5 +235,23 @@ std::basic_string<_Elem,_Traits,_Alloc>&
      return str;
  }
 
+#ifdef _WIN32
+#include <Windows.h>
+BOOL IsObjectOnStack(LPVOID pObject)
+{
+    INT nStackValue(0);
+
+    MEMORY_BASIC_INFORMATION mi = { 0 };
+    DWORD dwRet = VirtualQuery(&nStackValue, &mi, sizeof(mi));
+
+    if (dwRet > 0)
+    {
+        return pObject >= mi.BaseAddress
+            && (DWORD)pObject < (DWORD)mi.BaseAddress + mi.RegionSize;
+    }
+
+    return FALSE;
+}
+#endif
 
 #endif //UTILS_HPP
