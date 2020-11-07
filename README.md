@@ -20,7 +20,9 @@ Todo：
 <definition> ::= "class" [userDefinedType]identifier <definitionBody> 
 // 当依据这条产生式规约时可以读取到对应字段加入自定义类型表
 // 然后在接下来的词法解析中得以应用
-...
+
+<producer> ::= beforeVn [userDefinedType]identifier afterVn;
+
 ```
 
 * [ ] 实现一些语法糖
@@ -41,4 +43,55 @@ Todo：
 </table>
 
 
+* [ ] 加强的递归展开
+
+<table>
+    <tr>
+        <td>before</td>
+        <td>after</td>
+    </tr>
+    <tr>
+        <td><pre>
+─── statement
+    └── rule
+        ├── producer
+        │   └── VnExpr
+        │       ├── beforeVn
+        │       ├── userDefinedType(SomeVnName)
+        │       └── afterVn
+        ├── deducer
+        ├── produced      // 现在可以通过链式展开，
+        │   ├── ...       // 将非终结符下重复出现的其它递归项展开
+        │   └── ...       
+        ├── orProduced    
+        │   └── produced  // 但是从语义上来说，
+        │   │   ├── ...   // orProduced的子节点应该直接展开到上一层
+        │   │   └── ...   
+        │   └── produced  // 不过递归的非终结符需要指引才能在上一层就完成展开
+        │       ├── ...   
+        │       └── ...
+        └── delimiter
+        </pre></td>
+        <td><pre>
+─── statement
+    └── rule
+        ├── producer
+        │   └── VnExpr
+        │       ├── beforeVn
+        │       ├── userDefinedType(SomeVnName)
+        │       └── afterVn
+        ├── deducer
+        ├── produced  // 即 &ltproduced>* 
+        │   ├── ...
+        │   └── ...
+        ├── produced
+        │   ├── ...
+        │   └── ...
+        ├── produced
+        │   ├── ...
+        │   └── ...
+        └── delimiter
+        </pre></td>
+    </tr> 
+</table>
 
