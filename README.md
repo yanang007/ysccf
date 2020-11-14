@@ -17,9 +17,20 @@ Todo：
 [ignore]
 %token space "\s+"
 ...
-<definition> ::= "class" [userDefinedType]identifier <definitionBody> 
-// 当依据这条产生式规约时可以读取到对应字段加入自定义类型表
+<classDefinition> ::= 
+        "class"
+        identifier -> [userDefinedType("definedClassName")] 
+        <definitionBody>
+        ";"
+        ;
+// 当依据这条产生式规约时可以读取到对应identifier的token加入自定义类型表
+// token类型转化为definedClass而不再是identifier
 // 然后在接下来的词法解析中得以应用
+<variableDefinition> ::= 
+        <definedClassName>
+        identifier
+        ";"
+        ;
 
 <producer> ::= beforeVn [userDefinedType]identifier afterVn;
 
@@ -43,7 +54,7 @@ Todo：
 </table>
 
 
-* [ ] 加强的递归展开
+* [ ] 加强的递归展开（可以引入[inline]属性），指示当前符号会直接在其所有引用位置展开
 
 <table>
     <tr>
@@ -64,7 +75,7 @@ Todo：
         │   ├── ...       // 将非终结符下重复出现的其它递归项展开
         │   └── ...       
         ├── orProduced    
-        │   └── produced  // 但是从语义上来说，
+        │   ├── produced  // 但是从语义上来说，
         │   │   ├── ...   // orProduced的子节点应该直接展开到上一层
         │   │   └── ...   
         │   └── produced  // 不过递归的非终结符需要指引才能在上一层就完成展开
@@ -95,3 +106,22 @@ Todo：
     </tr> 
 </table>
 
+* [ ] compilerFrontendParallel，使用队列实现词法和文法解析的并行执行
+
+<table>
+    <tr>
+        <td>before</td>
+        <td><pre>
+lexer -> custom steps -> parser -> custom steps -> user
+        </pre></td>
+    </tr>
+    <tr>
+        <td>after</td>
+        <td><pre>
+lexer -> custom steps -> token queue
+fetched from token queue -> custom steps -> parser -> custom steps -> user
+        </pre></td>
+    </tr> 
+</table>
+
+* [ ] 算符分析方法

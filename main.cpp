@@ -28,7 +28,6 @@
 bool testContainerUtil();
 #include "grammar/grammarAlgos.h"
 
-
 int main([[maybe_unused]] int argv, [[maybe_unused]] char * args[])
 {
     const static

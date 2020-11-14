@@ -23,12 +23,13 @@ public:
     const grammar& construct(pSyntaxTree);
     const grammar& lastConstruct() const { return cfe.grammar(); }
 
-    const tLexer& compilerLexer() const { return cfeOfCC.lexer(); }
-    const tLexer& grammarLexer() const { return cfe.lexer(); }
+    compilerFrontend& grammarFrontend() { return cfe; }
 
+    const tLexer& compilerLexer() const { return cfeOfCC.lexer(); }
     const nameTable& compilerSymbolTable() const { return cfeOfCC.symbolTable(); }
     const nameTable& compilerTokenTable() const { return cfeOfCC.tokenTable(); }
 
+    const tLexer& grammarLexer() const { return cfe.lexer(); }
     const nameTable& grammarSymbolTable() const { return cfe.symbolTable(); }
     const nameTable& grammarTokenTable() const { return cfe.tokenTable(); }
 

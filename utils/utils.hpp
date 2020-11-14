@@ -233,8 +233,9 @@ std::basic_string<_Elem,_Traits,_Alloc>&
             break;
      }
      return str;
- }
+}
 
+/*
 #ifdef _WIN32
 #include <Windows.h>
 inline BOOL IsObjectOnStack(LPVOID pObject)
@@ -253,5 +254,6 @@ inline BOOL IsObjectOnStack(LPVOID pObject)
     return FALSE;
 }
 #endif
+*/
 
 #endif //UTILS_HPP

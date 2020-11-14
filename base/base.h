@@ -14,6 +14,7 @@
 
 typedef size_t nodeType;
 typedef wchar_t charType;
+typedef std::basic_string_view<charType> stringViewType;
 typedef std::basic_string<charType> stringType;
 typedef std::basic_ostream<charType> ostreamType;
 typedef std::basic_istream<charType> istreamType;

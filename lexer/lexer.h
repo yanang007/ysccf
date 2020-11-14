@@ -10,7 +10,7 @@
 class lexer
 {
 public:
-    using tokenID = nodeType;
+    using tokenID = nodeType;//type_wrapper<nodeType, 225>;
     using lexUnitInfo = lexUnitInfo;
     inline const static stringType tokenDefiner = L"%token";
 

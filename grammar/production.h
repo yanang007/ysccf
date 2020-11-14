@@ -25,7 +25,7 @@ public:
     class producedType : public std::pair<nodeType,idType>{
     public:
         using base = std::pair<nodeType,idType>;
-        producedType(nodeType n,idType t):base(n,t){}
+        producedType(nodeType n,idType t) : base(n,t){}
         bool isSymbol() const { return second == itSymbol; }
         bool isToken() const { return second == itToken; }
         bool isReduced() const { return second == itReduced; }
