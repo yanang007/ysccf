@@ -2,23 +2,11 @@
 #define GRAMMAR_H
 
 #include <map>
-#include <map>
 
 #include "../base/base.h"
 #include "production.h"
+#include "grammarTypes.h"
 #include "../utils/invokeful.hpp"
-
-typedef nodeType producerType;
-struct productionHandle
-{
-    /*inline productionHandle(
-            nodeType producer,
-            size_t productionPos);*/
-    producerType producer;
-    size_t productionPos;
-    inline bool operator==(const productionHandle&) const;
-    inline bool operator<(const productionHandle&) const;
-};
 
 class grammar
 {
@@ -28,18 +16,18 @@ public:
     inline
     static const stringType sProductionDelimiter = L"| ";
 
-    typedef size_t productionID;
-    typedef std::vector<production> rulesType;
-    typedef std::vector<rulesType> rulesVecType;
-    typedef std::vector<productionHandle> ruleIndicesType;
-    typedef std::map<productionHandle,productionID> ruleIdsType;
-    typedef std::pair<nodeType,production> deductionType;
-    typedef std::pair<nodeType,rulesType> deductionsType;
+    using productionID = size_t;
+    using rulesType = std::vector<production>;
+    using rulesVecType = std::vector<rulesType>;
+    using ruleIndicesType = std::vector<productionHandle>;
+    using ruleIdsType = std::map<productionHandle,productionID>;
+    using deductionType = std::pair<symbolID,production>;
+    using deductionsType = std::pair<symbolID,rulesType>;
 
     static
     ostreamType& printDeduction(
             ostreamType& os,
-            nodeType producer,
+            symbolID producer,
             const production& production ,
             const nameTable& symbolTable,
             const nameTable& tokenTable);
@@ -49,11 +37,11 @@ public:
     grammar();
     ~grammar();
 
-    nodeType newSymbol();
+    symbolID newSymbol();
     //引入一个新非终结符Vn
-    productionID addProduction(nodeType, production);
+    productionID addProduction(producerType, production);
     productionID addProduction(deductionType);
-    production& addProduction(nodeType, productionID* p = nullptr);
+    production& addProduction(symbolID, productionID* p = nullptr);
 
     const production& productionAt(productionID id) const { return productionAt(getHandle(id)); }
     const production& productionAt(productionHandle hnd) const { auto&& [prder,prd] = hnd; return _deductions[prder][prd]; }
@@ -61,8 +49,8 @@ public:
     productionID getID(const productionHandle& hdn) const { return _iIndex.at(hdn); }
     productionID getID(producerType producer,size_t productionPos) const { return _iIndex.at(productionHandle{producer,productionPos}); }
 
-    nodeType start() const { return _start; }
-    void markStart(nodeType n) { _start = n; }
+    symbolID start() const { return _start; }
+    void markStart(symbolID n) { _start = n; }
 
     size_t symbolSize() const { return _deductions.size(); }
     size_t symbolEmpty() const { return symbolSize() == 0; }
@@ -70,7 +58,7 @@ public:
     bool empty() const { return size() == 0; } //返回当前grammar是否为空
 
     const rulesVecType& deductions() const { return _deductions; }
-    const rulesType& productions(nodeType n) const { return _deductions[n]; }
+    const rulesType& productions(symbolID n) const { return _deductions[n]; }
     const ruleIndicesType& index() const { return _index; }
 
     ostreamType& toStream(ostreamType& os, const nameTable& symbolTable, const nameTable& tokenTable) const;
@@ -91,7 +79,7 @@ protected:
     rulesVecType _deductions;
     ruleIndicesType _index;
     ruleIdsType _iIndex;
-    nodeType _start;
+    symbolID _start;
 };
 
 ostreamType& operator<<(ostreamType& os, const grammar& syn);

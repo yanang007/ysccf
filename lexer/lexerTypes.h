@@ -1,15 +1,20 @@
-﻿#ifndef TOKENSTREAM_H
-#define TOKENSTREAM_H
+﻿#ifndef LEXERTYPES_H
+#define LEXERTYPES_H
 
 #include <vector>
 #include <ostream>
 #include <string>
-#include <deque>
+#include <list>
 
 #include "../base/base.h"
 #include "../utils/nameTable.h"
 
-using tokenID = nodeType;
+#include "../utils/type_wrapper.hpp"
+
+namespace lexerTypes {
+	
+using tokenID = type_wrapper<nodeType, 225>;
+
 struct lexUnitInfo
 {
     stringType raw;
@@ -53,7 +58,8 @@ public:
 
 using tokenStream = stdexp::generator<std::reference_wrapper<tokenUnit>>;
 
+using tokenStreamGrowingStorage = std::list<tokenUnit>;
 
-using tokenStreamGrowingStorage = std::deque<tokenUnit>;
+}
 
-#endif // TOKENSTREAM_H
+#endif // LEXERTYPES_H

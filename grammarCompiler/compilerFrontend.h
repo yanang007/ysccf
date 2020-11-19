@@ -12,7 +12,7 @@ struct ignoreAndCopyHelper
 {
     lexer::tokenStream operator() (lexer::tokenStream tokens)
     {
-        for (tokenUnit& token : tokens) {
+        for (lexer::tokenUnit& token : tokens) {
             storage.push_back(token);
             if (!ignored.contains(token.id)) {
                 co_yield storage.back();

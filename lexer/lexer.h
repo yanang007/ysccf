@@ -3,26 +3,26 @@
 
 #include <vector>
 
-#include "./tokenStream.h"
+#include "./lexerTypes.h"
 
 #include "../FA/FAs.h"
 
 class lexer
 {
 public:
-    using tokenID = nodeType;//type_wrapper<nodeType, 225>;
-    using lexUnitInfo = lexUnitInfo;
+    using tokenID = lexerTypes::tokenID;
+    using lexUnitInfo = lexerTypes::lexUnitInfo;
     inline const static stringType tokenDefiner = L"%token";
 
     //conflicts may occur when states amount are fairly huge
     inline const static tokenID fin = nodeNotExist;
     inline const static tokenID null = fin - 1;
     inline const static tokenID allRoads = fin - 2;
-    using tokenUnit = tokenUnit;
+    using tokenUnit = lexerTypes::tokenUnit;
 
-    using tokenStreamStorage = tokenStreamStorage;
-    using tokenStreamGrowingStorage = tokenStreamGrowingStorage;
-    using tokenStream = tokenStream;
+    using tokenStreamStorage = lexerTypes::tokenStreamStorage;
+    using tokenStreamGrowingStorage = lexerTypes::tokenStreamGrowingStorage;
+    using tokenStream = lexerTypes::tokenStream;
 
 public:
     lexer();

@@ -3,7 +3,7 @@
 
 #include "./attributeBase.h"
 
-class ignoreAttr : public attributeBase< F<> >
+class ignoreAttr : public overloadableAttribute< OnTokenDef<> >
 {
 public:
 	stringViewType name() override
@@ -16,9 +16,9 @@ public:
 
 	}
 
-	void invoked(grammarCompiler& compiler) override
+	void invoked(grammarCompiler& compiler, lexer::tokenID id) override
 	{
-
+		compiler.grammarFrontend().setTokenToBeIgnored(id);
 	}
 };
 

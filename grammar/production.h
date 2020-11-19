@@ -4,6 +4,8 @@
 #include "../base/base.h"
 #include "../lexer/lexer.h"
 
+#include "../grammar/grammarTypes.h"
+
 class nameTable;
 
 class production
@@ -30,6 +32,9 @@ public:
         bool isToken() const { return second == itToken; }
         bool isReduced() const { return second == itReduced; }
         bool isEmpty() const { return second == itEmpty; }
+
+        symbolID symbol() const { return symbolID(first); }
+        lexer::tokenID token() const { return lexer::tokenID(first); }
 
         operator nodeType() const
         {

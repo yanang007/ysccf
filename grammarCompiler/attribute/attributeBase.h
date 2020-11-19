@@ -11,6 +11,9 @@
 /**/
 template<typename T>
 concept Param =
+	std::is_same_v<T, lexer::tokenID> ||
+	std::is_same_v<T, symbolID> ||
+	std::is_same_v<T, producedUnitHandle> ||
 	std::is_same_v<T, int> ||
 	std::is_same_v<T, std::string>;
 
@@ -44,9 +47,23 @@ struct variant_pack
 	}
 };
 
-using ParamPackHelper = variant_pack<int, std::string>;
+using ParamPackHelper = 
+	variant_pack<
+		lexer::tokenID, 
+		symbolID, 
+		producedUnitHandle, 
+		int, 
+		std::string
+	>;
+
 using ParamType = ParamPackHelper::type;
 
+template<>
+inline std::string type_code<lexer::tokenID> = "t";
+template<>
+inline std::string type_code<symbolID> = "y";
+template<>
+inline std::string type_code<producedUnitHandle> = "p";
 template<>
 inline std::string type_code<int> = "i";
 template<>
@@ -88,8 +105,33 @@ private:
 	}
 };
 
+// 作用于终结符定义
+template<Param... Args>
+using OnTokenDef = F<lexer::tokenID, Args...>;
+
+// 作用于非终结符定义
+template<Param... Args>
+using OnSymbolDef = F<symbolID, Args...>;
+
+// 作用于产生式右端的某个单元
+template<Param... Args>
+using OnProducedUnit = F<producedUnitHandle, Args...>;
+
+
+class attributeBase
+{
+public:
+	attributeBase() {};
+	virtual ~attributeBase() {};
+
+	virtual bool invoked(grammarCompiler& g, const std::vector<ParamType>& params) = 0;
+
+	virtual stringViewType name() = 0;
+	virtual void init(grammarCompiler&) = 0;
+};
+
 template<FType... Fs>
-class attributeBase : Fs...
+class overloadableAttribute : attributeBase, Fs...
 {
 public:
 	static std::string generateParamCode(const std::vector<ParamType>& params)
@@ -102,17 +144,17 @@ public:
 	}
 
 public:
-	attributeBase() {};
-	virtual ~attributeBase() {};
+	overloadableAttribute() {};
+	virtual ~overloadableAttribute() {};
 
-	bool invoked(grammarCompiler& g, const std::vector<ParamType>& params)
+	bool invoked(grammarCompiler& g, const std::vector<ParamType>& params) override
 	{
 		std::string paramCode = generateParamCode(params);
 		return (... || (paramCode == Fs::paramCode() && Fs::invoked(g, params)));
 	};
 
-	virtual stringViewType name() { return "\"NotImplemented\""; };
-	virtual void init(grammarCompiler&) { return; };
+	virtual stringViewType name() override { return "\"NotImplemented\""; };
+	virtual void init(grammarCompiler&) override { return; };
 };
 
 

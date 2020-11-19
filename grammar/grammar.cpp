@@ -8,7 +8,7 @@
 
 ostreamType &grammar::printDeduction(
         ostreamType &os,
-        nodeType producer,
+        symbolID producer,
         const production &production,
         const nameTable &symbolTable,
         const nameTable &tokenTable)
@@ -32,7 +32,7 @@ grammar::~grammar()
 
 }
 
-nodeType grammar::newSymbol()
+symbolID grammar::newSymbol()
 {
     auto ret = symbolSize();
     _deductions.push_back(rulesType());
@@ -57,7 +57,7 @@ grammar::productionID grammar::addProduction(grammar::deductionType ded)
     return addProduction(ded.first,ded.second);
 }
 
-production& grammar::addProduction(nodeType producer, productionID* pid)
+production& grammar::addProduction(symbolID producer, productionID* pid)
 {
     auto ret = addProduction(producer, production());
     if (pid != nullptr) {
@@ -68,7 +68,7 @@ production& grammar::addProduction(nodeType producer, productionID* pid)
 
 ostreamType &grammar::toStream(ostreamType &os, const nameTable &symbolTable, const nameTable &tokenTable) const
 {
-    nodeType n = 0;
+    symbolID n = 0;
     for( const auto& prods : deductions() ){
         os << production::sBeforeSymbol << symbolTable.ref(n) << production::sAfterSymbol
            << grammar::sDeductionSymbol;

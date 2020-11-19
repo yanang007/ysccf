@@ -4,19 +4,18 @@
 #include "grammarAlgos.h"
 #include "../utils/containerUtil.hpp"
 
-
 class dependencyConverter
 {
 public:
     dependencyConverter(
-        std::map<nodeType, std::set<lexer::tokenID>>& theSet,
-        const std::vector<std::set<nodeType>>& dependency)
+        std::map<symbolID, std::set<lexer::tokenID>>& theSet,
+        const std::vector<std::set<symbolID>>& dependency)
         : theSet(theSet), dependency(dependency)
     { }
 
-    template<typename Func>
+    template<typename IDType, typename Func>
     void applyRoots(
-        const std::map<nodeType, std::set<nodeType>>& roots,
+        const std::map<IDType, std::set<symbolID>>& roots,
         Func&& f)
     {
         for (const auto& [root, children] : roots) {
@@ -24,27 +23,27 @@ public:
         }
     }
 
-    template<typename Func>
+    template<typename IDType, typename Func>
     void applyRoot(
-        const nodeType root,
-        const std::set<nodeType>& children,
+        const IDType root,
+        const std::set<symbolID>& children,
         Func&& f)
     {
         visited.clear();
-        for (const nodeType child : children) {
+        for (const symbolID child : children) {
             convertDependencyImpl(root, child, f);
         }
     }
 
-    template<typename Func>
+    template<typename IDType, typename Func>
     void convertDependencyImpl(
-        nodeType root,
-        nodeType current,
+        IDType root,
+        symbolID current,
         Func&& f)
     {
         f(root, theSet[current]);
         visited.insert(current);
-        for (const nodeType child : dependency[current]) {
+        for (const symbolID child : dependency[current]) {
             if (contains(visited, child)) {
                 continue;
             }
@@ -53,14 +52,14 @@ public:
     }
 
 private:
-    std::map<nodeType, std::set<lexer::tokenID>>& theSet;
-    const std::vector<std::set<nodeType>>& dependency;
-    std::set<nodeType> visited;
+    std::map<symbolID, std::set<lexer::tokenID>>& theSet;
+    const std::vector<std::set<symbolID>>& dependency;
+    std::set<symbolID> visited;
 };
 
 std::tuple<
-    std::map<nodeType, std::set<lexer::tokenID>>,
-    std::map<nodeType, std::set<lexer::tokenID>> >
+    std::map<symbolID, std::set<lexer::tokenID>>,
+    std::map<symbolID, std::set<lexer::tokenID>> >
     firstNfollow(const grammar & grmr)
 {
     R"kk(
@@ -74,16 +73,16 @@ std::tuple<
 <D> ::= a <S> | c;
 )kk";
 
-    std::map<nodeType, std::set<lexer::tokenID>> first,follow;
+    std::map<symbolID, std::set<lexer::tokenID>> first,follow;
 
     // 存储非终结符的first集依赖关系
-    std::vector<std::set<nodeType>> firstSetDependencyTree(grmr.symbolSize()); 
+    std::vector<std::set<symbolID>> firstSetDependencyTree(grmr.symbolSize()); 
 
     // 存储终结符的直接子节点
-    std::map<lexer::tokenID, std::set<nodeType>> tokenRoots; 
+    std::map<lexer::tokenID, std::set<symbolID>> tokenRoots; 
 
     // 存储可空的非终结符
-    std::set<nodeType> nullableVns;
+    std::set<symbolID> nullableVns;
 
     for (auto i : range(grmr.symbolSize())) {
         for (const auto& [producer, prods] : enumerate(grmr.deductions())) {
@@ -107,7 +106,7 @@ std::tuple<
                     else if (iter->isToken()) {
                         // 终结符，连接到对应终结符的树根上
                         // 右指向左
-                        tokenRoots[*iter].insert(producer);
+                        tokenRoots[lexer::tokenID(*iter)].insert(producer);
                         break;
                     }
                     else {
@@ -127,7 +126,7 @@ std::tuple<
     }
     // 在这里将first集依赖树转换为first集
     // 但是先不将null元素加入first集，因为follows集要依赖first集删去null
-    auto addTokenIntoSetOfX = [](nodeType root, std::set<lexer::tokenID>& firstOfX)
+    auto addTokenIntoSetOfX = [](lexer::tokenID root, std::set<lexer::tokenID>& firstOfX)
     {
         firstOfX.insert(root);
     };
@@ -138,11 +137,11 @@ std::tuple<
     tokenRoots.clear(); // 清空终结符根节点
 
     // 存储非终结符的follow集依赖关系
-    std::vector<std::set<nodeType>> followSetDependencyTree(grmr.symbolSize());
+    std::vector<std::set<symbolID>> followSetDependencyTree(grmr.symbolSize());
 
     // 非终结符的follow集会依赖first集（不包含null）
     // 这里存储对应first集（...）的直接子节点
-    std::map<nodeType, std::set<nodeType>> firstSetRoots;
+    std::map<symbolID, std::set<symbolID>> firstSetRoots;
 
     // 文章结束符加入起点的follow集
     tokenRoots[lexer::fin].insert(grmr.start());
@@ -165,7 +164,7 @@ std::tuple<
                             // 右方为非终结符
                             // Vn依赖其first集（不包含null）
                             // 右指向左
-                            firstSetRoots[*subiter].insert(*iter);
+                            firstSetRoots[subiter->symbol()].insert(iter->symbol());
 
                             // 若可空则继续考察右方元素
                             if (!contains(nullableVns, *subiter)) {
@@ -176,7 +175,7 @@ std::tuple<
                             // 右方为终结符
                             // 终结符，连接到对应终结符的树根上
                             // 右指向左
-                            tokenRoots[*iter].insert(producer);
+                            tokenRoots[iter->token()].insert(producer);
                             break;
                         }
                         else {
@@ -188,7 +187,7 @@ std::tuple<
                         // 发现Vn右边元素均可空（或没有元素）
                         // Vn依赖产生式左边元素的follow集合
                         // 左指向右
-                        followSetDependencyTree[producer].insert(*iter);
+                        followSetDependencyTree[producer].insert(iter->symbol());
                     }
                 }
 
@@ -200,7 +199,7 @@ std::tuple<
     auto dcFollow = dependencyConverter(follow, followSetDependencyTree);
     dcFollow.applyRoots(tokenRoots, addTokenIntoSetOfX);
 
-    auto addFirstOfXIntoFollowOfY = [&first](nodeType rootFirstSetID, std::set<lexer::tokenID>& followOfX)
+    auto addFirstOfXIntoFollowOfY = [&first](symbolID rootFirstSetID, std::set<lexer::tokenID>& followOfX)
     {
         auto& rootFirstSet = first[rootFirstSetID];
         followOfX.insert(rootFirstSet.begin(), rootFirstSet.end());
