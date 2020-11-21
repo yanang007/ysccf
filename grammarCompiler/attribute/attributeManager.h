@@ -3,6 +3,8 @@
 
 #include "./attributeBase.h"
 
+using upAttribute = std::unique_ptr<attributeBase>;
+
 class attributeManager
 {
 public:
@@ -14,6 +16,10 @@ public:
 			return iter->second.get();
 		}
 		return nullptr;
+	}
+
+	void declareNewAttribute(const std::string& name, upAttribute&& attr) {
+		attrs.emplace(name, std::move(attr));
 	}
 
 private:

@@ -6,6 +6,7 @@
 #include "../grammar/syntaxTree.h"
 #include "../LR0/LR0Grammar.h"
 #include "./compilerFrontend.h"
+#include "./attribute/attributeManager.h"
 
 class grammarCompiler
 {
@@ -73,6 +74,7 @@ protected:
 
 
     void initGrammarCompiler();
+    void initAttributes();
 
     LR0Grammar* pGrammarParser;
 
@@ -94,6 +96,7 @@ protected:
             _attribute,
             _attributedStatement;
 
+    attributeManager attrs;
     compilerFrontend cfe;
     compilerFrontend cfeOfCC;
 };

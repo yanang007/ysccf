@@ -235,6 +235,28 @@ std::basic_string<_Elem,_Traits,_Alloc>&
      return str;
 }
 
+#include <memory>
+template<
+    typename T,
+    typename S
+>
+std::unique_ptr<T> static_pointer_cast(std::unique_ptr<S>&& r)
+{
+    if (static_cast<T*>(r.get())) {
+        return std::unique_ptr<T>(static_cast<T*>(r.release()));
+    }
+}
+
+template<
+    typename T,
+    typename S,
+    typename... Args
+>
+std::unique_ptr<T> make_unique_of(Args&&... args)
+{
+    return static_pointer_cast<T>(std::make_unique<S>(std::forward<Args>(args)...));
+}
+
 /*
 #ifdef _WIN32
 #include <Windows.h>

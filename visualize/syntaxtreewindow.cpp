@@ -89,7 +89,7 @@ void syntaxTreeWindow::connectSignals()
 
 void syntaxTreeWindow::initGrammarCompiler()
 {
-    for ( const auto& [id,name] : gm.compilerTokenTable().yTox()){
+    for ( const auto& [id,name] : gm.compilerTokenTable().right){
         tokenColorTable.insert(id,randomColor());
     }
 }

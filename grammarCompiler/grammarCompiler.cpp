@@ -2,11 +2,13 @@
 
 #include "../base/errorReport.h"
 #include "../utils/invokeful.hpp"
+#include "./attribute/ignoreAttribute.h"
 
 
 grammarCompiler::grammarCompiler()
 {
     initGrammarCompiler();
+    initAttributes();
 }
 
 grammarCompiler::~grammarCompiler()
@@ -133,7 +135,7 @@ void grammarCompiler::parseRule(pcSyntaxTree tree)
             break;
 
         std::tie(producerID,decRet) = declareNewSymbol(producerName);
-        if(decRet == compilerFrontend::dsUndefined)
+        if(decRet == compilerFrontend::declareState::dsUndefined)
             break;
 
         ++iter;
@@ -185,7 +187,7 @@ void grammarCompiler::parseProduced(nodeType producer, pcSyntaxTree tree)
                     case vttVn:
                         std::tie(nodeCont,dsret) =
                                 declareNewSymbol(raw);
-                        if( dsret == compilerFrontend::dsUndefined )
+                        if( dsret == compilerFrontend::declareState::dsUndefined )
                             break;
                         prod.appendSymbol(nodeCont);
                         break;
@@ -195,7 +197,7 @@ void grammarCompiler::parseProduced(nodeType producer, pcSyntaxTree tree)
                         raw = replaced(raw,stringType(L"\\\""),stringType(L"\""));
                         std::tie(nodeCont,dsret) =
                                 declareNewToken(stringType(L"_s\"")+raw+L"\"",raw,true);
-                        if( dsret == compilerFrontend::dsUndefined )
+                        if( dsret == compilerFrontend::declareState::dsUndefined )
                             break;
                         prod.appendToken(nodeCont);
                         break;
@@ -203,7 +205,7 @@ void grammarCompiler::parseProduced(nodeType producer, pcSyntaxTree tree)
                         std::tie(nodeCont,dsret) =
                                 declareNewToken(raw,stringType(L"诶？!"));
                         switch ( dsret ) {
-                        case compilerFrontend::dsRedefined:
+                        case compilerFrontend::declareState::dsRedefined:
                             prod.appendToken(nodeCont);
                             break;
                         default:
@@ -252,11 +254,11 @@ grammarCompiler::
         } catch (std::out_of_range e) {
             id = customLexer.newToken(str,escaped);
             customTokenTable.insert(name,id);
-            return std::make_pair(id,dsSuccess);
+            return std::make_pair(id,declareState::dsSuccess);
         }
-        return std::make_pair(id,dsRedefined);
+        return std::make_pair(id,declareState::dsRedefined);
     }
-    return std::make_pair(nodeNotExist,dsUndefined);*/
+    return std::make_pair(nodeNotExist,declareState::dsUndefined);*/
 }
 
 std::pair<nodeType, grammarCompiler::declareState> grammarCompiler::declareNewSymbol(const stringType &name)
@@ -270,11 +272,11 @@ std::pair<nodeType, grammarCompiler::declareState> grammarCompiler::declareNewSy
         } catch (std::out_of_range e) {
             id = customGrammarContainer.newSymbol();
             customSymbolTable.insert(name,id);
-            return std::make_pair(id,dsSuccess);
+            return std::make_pair(id,declareState::dsSuccess);
         }
-        return std::make_pair(id,dsRedefined);
+        return std::make_pair(id,declareState::dsRedefined);
     }
-    return std::make_pair(nodeNotExist,dsUndefined);*/
+    return std::make_pair(nodeNotExist,declareState::dsUndefined);*/
 }
 
 std::pair<stringType, grammarCompiler::vtType> grammarCompiler::parseV(pcSyntaxTree tree)
@@ -514,4 +516,9 @@ R"kk(
     pGrammarParser = &cfeOfCC.parser();
 
     //symbolTable.insert(L"ExtendedStart",_Vt+1);
+}
+
+void grammarCompiler::initAttributes()
+{
+    attrs.declareNewAttribute("ignore", make_unique_of<attributeBase, ignoreAttr>());
 }

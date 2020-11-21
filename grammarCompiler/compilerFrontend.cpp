@@ -51,18 +51,17 @@ std::pair<lexer::tokenID, compilerFrontend::declareState> compilerFrontend::decl
 {
     if (!name.empty() && !str.empty()) {
         lexer::tokenID id;
-
-        try {
+        if (auto iter = tokenTable().find(name); !tokenTable().isEnd(iter)) {
             id = tokenTable().at(name);
         }
-        catch (std::out_of_range e) {
+        else {
             id = lexer().newToken(str, escaped);
             tokenTable().insert(name, id);
-            return std::make_pair(id, dsSuccess);
+            return std::make_pair(id, declareState::dsSuccess);
         }
-        return std::make_pair(id, dsRedefined);
+        return std::make_pair(id, declareState::dsRedefined);
     }
-    return std::make_pair(nodeNotExist, dsUndefined);
+    return std::make_pair(nodeNotExist, declareState::dsUndefined);
 }
 
 std::pair<nodeType, compilerFrontend::declareState> compilerFrontend::declareNewSymbol(const stringType& name)
@@ -70,15 +69,16 @@ std::pair<nodeType, compilerFrontend::declareState> compilerFrontend::declareNew
     if (!name.empty()) {
         nodeType id;
 
-        try {
+        if (auto iter = symbolTable().find(name); !symbolTable().isEnd(iter)) {
             id = symbolTable().at(name);
         }
-        catch (std::out_of_range e) {
+        else {
             id = grammar().newSymbol();
             symbolTable().insert(name, id);
-            return std::make_pair(id, dsSuccess);
+            return std::make_pair(id, declareState::dsSuccess);
         }
-        return std::make_pair(id, dsRedefined);
+
+        return std::make_pair(id, declareState::dsRedefined);
     }
-    return std::make_pair(nodeNotExist, dsUndefined);
+    return std::make_pair(nodeNotExist, declareState::dsUndefined);
 }

@@ -33,7 +33,7 @@ struct ignoreAndCopyHelper
 class compilerFrontend
 {
 public:
-    enum declareState {
+    enum class declareState {
         dsRedefined,
         dsUndefined,
         dsSuccess,

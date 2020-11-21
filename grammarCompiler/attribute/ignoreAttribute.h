@@ -6,10 +6,10 @@
 class ignoreAttr : public overloadableAttribute< OnTokenDef<> >
 {
 public:
-	stringViewType name() override
+	/*stringViewType name() override
 	{
 		return L"ignore";
-	}
+	}*/
 
 	void init(grammarCompiler&) override
 	{

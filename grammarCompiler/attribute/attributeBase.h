@@ -6,7 +6,8 @@
 #include <vector>
 
 #include "../../base/base.h"
-#include "../grammarCompiler.h"
+
+class grammarCompiler;
 
 /**/
 template<typename T>
@@ -91,7 +92,7 @@ public:
 
 	bool invoked(grammarCompiler& g, const std::vector<ParamType>& params)
 	{
-		invokedImpl(params, std::make_index_sequence<sizeof...(Args)>());
+		invokedImpl(g, params, std::make_index_sequence<sizeof...(Args)>());
 		return true;
 	};
 
@@ -126,12 +127,12 @@ public:
 
 	virtual bool invoked(grammarCompiler& g, const std::vector<ParamType>& params) = 0;
 
-	virtual stringViewType name() = 0;
+	//virtual stringViewType name() = 0;
 	virtual void init(grammarCompiler&) = 0;
 };
 
 template<FType... Fs>
-class overloadableAttribute : attributeBase, Fs...
+class overloadableAttribute : public attributeBase, Fs...
 {
 public:
 	static std::string generateParamCode(const std::vector<ParamType>& params)
@@ -153,7 +154,7 @@ public:
 		return (... || (paramCode == Fs::paramCode() && Fs::invoked(g, params)));
 	};
 
-	virtual stringViewType name() override { return "\"NotImplemented\""; };
+	//virtual stringViewType name() override { return "\"NotImplemented\""; };
 	virtual void init(grammarCompiler&) override { return; };
 };
 

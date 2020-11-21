@@ -201,11 +201,11 @@ ostreamType &LR0Grammar::printParseStepVec(ostreamType& os,
         os<<"?= ";
         const auto& [dest,type] = stepDetail.action;
         switch ( type ) {
-        case LRTable::ateShift:
+        case LRTable::actionTypeEnum::ateShift:
             os<<"S"<<dest;
             break;
 
-        case LRTable::ateReduce:
+        case LRTable::actionTypeEnum::ateReduce:
             os<<"r"<<dest<<" goto " << stepDetail._goto << " (";
             printDeduction(
                     os,
@@ -216,7 +216,7 @@ ostreamType &LR0Grammar::printParseStepVec(ostreamType& os,
             os<<")";
             break;
 
-        case LRTable::ateAccept:
+        case LRTable::actionTypeEnum::ateAccept:
             os<<"acc "<<dest;
             break;
         }
@@ -291,14 +291,14 @@ try {
         }
 
         switch ( type ) {
-        case LRTable::ateShift:
+        case LRTable::actionTypeEnum::ateShift:
             stateStk.push_back(dest);
             symbolStk.push_back(pToken);
             ++iter;
 
         break;
 
-        case LRTable::ateReduce:
+        case LRTable::actionTypeEnum::ateReduce:
             pProd = &productionAt(dest);
             hnd = getHandle(dest);
             pRoot.reset(new syntaxTree(hnd.producer));
@@ -321,7 +321,7 @@ try {
 
         break;
 
-        case LRTable::ateAccept:
+        case LRTable::actionTypeEnum::ateAccept:
             ++iter;
             break;
         }
@@ -403,14 +403,14 @@ pSyntaxTreeStream LR0Grammar::parseCoro(lexer::tokenStream tokens, parseStepVecT
             }
 
             switch (type) {
-            case LRTable::ateShift:
+            case LRTable::actionTypeEnum::ateShift:
                 stateStk.push_back(dest);
                 symbolStk.push_back(pToken);
                 ++iter; ++id;
 
                 break;
 
-            case LRTable::ateReduce:
+            case LRTable::actionTypeEnum::ateReduce:
                 pProd = &productionAt(dest);
                 hnd = getHandle(dest);
                 pRoot.reset(new syntaxTree(hnd.producer));
@@ -435,7 +435,7 @@ pSyntaxTreeStream LR0Grammar::parseCoro(lexer::tokenStream tokens, parseStepVecT
 
                 break;
 
-            case LRTable::ateAccept:
+            case LRTable::actionTypeEnum::ateAccept:
                 ++iter; ++id;
                 break;
             }
@@ -482,7 +482,7 @@ void LR0Grammar::fillTable(const std::vector<LR0ItemSet> &stateVec, const std::v
                         i,
                         lexer::fin,
                         item.production(),
-                        LRTable::ateAccept
+                        LRTable::actionTypeEnum::ateAccept
                     );
                 }
                 else{
@@ -490,7 +490,7 @@ void LR0Grammar::fillTable(const std::vector<LR0ItemSet> &stateVec, const std::v
                         i,
                         lexer::allRoads,
                         item.production(),
-                        LRTable::ateReduce
+                        LRTable::actionTypeEnum::ateReduce
                     );
                 }
                 break;
@@ -502,7 +502,7 @@ void LR0Grammar::fillTable(const std::vector<LR0ItemSet> &stateVec, const std::v
                 table.setGoto(i,produced.first,row);
             }
             else if ( produced.second == production::itToken ){
-                table.setAction(i,produced.first,row,LRTable::ateShift);
+                table.setAction(i,produced.first,row,LRTable::actionTypeEnum::ateShift);
             }
         }
     }
@@ -536,7 +536,7 @@ void LR0Grammar::fillTable(const std::vector<LR0ItemSet> &stateVec, const std::v
                             i,
                             lexer::fin,
                             item.production(),
-                            LRTable::ateAccept
+                            LRTable::actionTypeEnum::ateAccept
                         );
                     }
                     else{

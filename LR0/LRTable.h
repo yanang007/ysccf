@@ -11,7 +11,7 @@
 class LRTable
 {
 public:
-    enum actionTypeEnum{
+    enum class actionTypeEnum{
         ateShift = 0,
         ateReduce,
         ateAccept,
@@ -45,7 +45,7 @@ public:
     void setGoto(rowNoType r1, producerType p,rowNoType r2){
         gotos[r1][p] = r2;
     }
-    void setAction(rowNoType r1, lexer::tokenID token, nodeType target,actionTypeEnum behavior){
+    void setAction(rowNoType r1, lexer::tokenID token, nodeType target, actionTypeEnum behavior){
         /*if(token == allRoads)
             actions[r1].clear();*/
         actions[r1][token] = actionType{target,behavior};
@@ -63,15 +63,12 @@ public:
         return gotos[r].at(p);
     }
     const auto& getAction(rowNoType r,lexer::tokenID t) const{
-        //if( actions[r].size() == 1 ){
-            try {
-                return actions[r].at(t);
-            } catch (std::out_of_range e) {
-                return actions[r].at(lexer::allRoads);
-                //return actions[r].at(t);
-            }
-        //}
-        //return actions[r].at(t);
+        if (auto iter = actions[r].find(t); iter != actions[r].end()) {
+            return iter->second;
+        }
+        else {
+            return actions[r].at(lexer::allRoads);
+        }
     }
 
     ostreamType& toStream(ostreamType& os, const nameTable& symbolTable, const nameTable& tokenTable) const;
