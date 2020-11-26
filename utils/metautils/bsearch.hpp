@@ -38,6 +38,12 @@ struct bsearch
         }
     }
 };
+
+template<
+    typename SeqT
+>
+using bset = bsearch<typename meta_qsort<SeqT>::result>;
+
 }
 }
 

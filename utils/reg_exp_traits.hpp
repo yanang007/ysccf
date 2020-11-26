@@ -54,30 +54,40 @@ struct escape_helper
         '.', '\\'
     >;
 
-    using regex_metas_set = clind::metautils::bsearch<typename clind::metautils::meta_qsort<regex_metas>::result>;
+    using regex_metas_set = clind::metautils::bset<regex_metas>;
 };
 
 // 转义掉涉及的控制字符，作为单纯的原始字符串
-template<typename ByteConv, typename FwdIter, typename EndIter, typename OutIter>
-void escape(FwdIter&& iter, EndIter&& endIter, OutIter&& outIter, char p = 0)
+template<
+    typename ByteConv, 
+    typename FwdIter, 
+    typename EndIter, 
+    typename OutIter, 
+    typename CharT = typename std::iterator_traits<FwdIter>::value_type>
+void regex_escape(FwdIter&& iter, EndIter&& endIter, OutIter&& outIter, char p = 0)
 {
-    using charType = decltype(*iter);
-    using helper = escape_helper<charType, ByteConv>;
+    using helper = escape_helper<CharT, ByteConv>;
     std::for_each(
         std::forward<FwdIter>(iter),
         std::forward<EndIter>(endIter),
         [&outIter](const auto c) {
+            if (helper::regex_metas_set::contains(c)) {
+                *outIter++ = '\\';
+            }
             *outIter++ = c;
         }
     );
 }
 
 // 转义掉涉及的控制字符，作为单纯的原始字符串
-template<typename FwdIter, typename EndIter, typename OutIter>
-void escape(FwdIter&& iter, EndIter&& endIter, OutIter&& outIter)
+template<
+    typename FwdIter, 
+    typename EndIter, 
+    typename OutIter, 
+    typename CharT = typename std::iterator_traits<FwdIter>::value_type>
+void regex_escape(FwdIter&& iter, EndIter&& endIter, OutIter&& outIter)
 {
-    using charType = decltype(*iter);
-    escape<default_byte_conv<charType>, FwdIter, EndIter, OutIter>(
+    escape<default_byte_conv<CharT>, FwdIter, EndIter, OutIter, CharT>(
         std::forward<FwdIter>(iter),
         std::forward<EndIter>(endIter),
         std::forward<OutIter>(outIter)
