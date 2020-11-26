@@ -65,10 +65,10 @@ cLexer::tokenStreamStorage cLexer::tokenize(stringType text) const
         }
         if( bestMatchTokenId == -1 ){
             errorReport(L"lexer::tokenize",
-                        stringType(L"unrecognized token at pos ")
+                        stringType(L"unrecognized token at pos.")
                         + std::to_wstring(pos - qText.begin())
                         + L"\n",
-                        10);
+                        ec_Lexer_UnknownToken);
             goto nruter;
         }
         infoPack = { stringType(pos,pos+bestMatchSize),

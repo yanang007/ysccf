@@ -28,6 +28,8 @@
 bool testContainerUtil();
 #include "grammar/grammarAlgos.h"
 
+#include "utils/reg_exp_traits.hpp"
+
 int main([[maybe_unused]] int argv, [[maybe_unused]] char * args[])
 {
     const static
@@ -36,6 +38,12 @@ int main([[maybe_unused]] int argv, [[maybe_unused]] char * args[])
             "en_US.UTF-8",
             std::locale::ctype );
     std::locale::global(loc);
+
+    constexpr auto t = escape_helper<char32_t>::regex_metas_set::contains('*');
+
+    char in[] = "1234*";
+    char out[100] = "";
+    escape(std::begin(in), std::end(in), std::begin(out));
 
     //1572617670
     //1572703044
