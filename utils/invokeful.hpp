@@ -271,15 +271,16 @@ template<typename Fin, typename... Fs>
     function_pipe(Fin&&, Fs&&...) ->
     function_pipe<inheritable_function<Fin>, inheritable_function<Fs>...>;
 
-
-template<typename InterType, size_t Count = 8>
+template<typename InterType>
 struct dynamic_function_pipe
 {
+    using interfunc_t = std::function<InterType(InterType)>;
+
     template<typename Fin>
     struct type : Fin
     {
-        constexpr type(Fin&& fin) :
-            Fin(std::forward<Fin>(fin))
+        constexpr type(Fin&& fin) 
+            : Fin(std::forward<Fin>(fin))
         {}
 
         template<typename... Args>
@@ -293,12 +294,49 @@ struct dynamic_function_pipe
 
         template<typename Func>
         void composing(Func&& f) {
-            funcs.push_back(f);
+            funcs.emplace_back(std::move(f));
         }
 
         size_t size() const { return funcs.size(); }
 
-        std::vector<std::function<InterType(InterType&&)>> funcs;
+        std::vector<interfunc_t> funcs;
+    };
+};
+
+/// <summary>
+/// 带优先级的函数管道
+/// 假设std::multimap内部存储的键会被有序遍历
+/// </summary>
+/// <typeparam name="InterType"></typeparam>
+template<typename InterType>
+struct priority_function_pipe
+{
+    using interfunc_t = std::function<InterType(InterType)>;
+
+    template<typename Fin>
+    struct type : Fin
+    {
+        constexpr type(Fin&& fin) 
+            : Fin(std::forward<Fin>(fin))
+        {}
+
+        template<typename... Args>
+        auto operator() (Args&&... args) {
+            auto ret = Fin::operator() (std::forward<Args>(args)...);
+            for (auto& [priority, f] : funcs) {
+                ret = f(std::move(ret));
+            }
+            return std::move(ret);
+        }
+
+        template<typename Func>
+        void composing(size_t priority, Func&& f) {
+            funcs.emplace(priority, std::move(f));
+        }
+
+        size_t size() const { return funcs.size(); }
+
+        std::multimap<size_t, interfunc_t> funcs;
     };
 };
 

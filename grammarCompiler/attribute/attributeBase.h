@@ -125,10 +125,10 @@ public:
 	attributeBase() {};
 	virtual ~attributeBase() {};
 
+	virtual bool verify(grammarCompiler& g, const std::vector<ParamType>& params) = 0;
 	virtual bool invoked(grammarCompiler& g, const std::vector<ParamType>& params) = 0;
-
-	//virtual stringViewType name() = 0;
 	virtual void init(grammarCompiler&) = 0;
+	virtual void dispose(grammarCompiler&) = 0;
 };
 
 template<FType... Fs>
@@ -148,14 +148,21 @@ public:
 	overloadableAttribute() {};
 	virtual ~overloadableAttribute() {};
 
-	bool invoked(grammarCompiler& g, const std::vector<ParamType>& params) override
+	virtual bool verify(grammarCompiler& g, const std::vector<ParamType>& params) override
+	{
+		// 核心假设就是在于重载函数个数较少，使用朴素算法逐个匹配可以节省常数开销
+		std::string paramCode = generateParamCode(params);
+		return (... || (paramCode == Fs::paramCode())); 
+	};
+
+	virtual bool invoked(grammarCompiler& g, const std::vector<ParamType>& params) override
 	{
 		std::string paramCode = generateParamCode(params);
 		return (... || (paramCode == Fs::paramCode() && Fs::invoked(g, params)));
 	};
 
-	//virtual stringViewType name() override { return "\"NotImplemented\""; };
 	virtual void init(grammarCompiler&) override { return; };
+	virtual void dispose(grammarCompiler&) override { return; };
 };
 
 

@@ -30,7 +30,10 @@ pSyntaxTree grammarCompiler::parse(stringType input)
     return cfeOfCC.parse(input);
 }
 
-const grammar &grammarCompiler::construct(pSyntaxTree pRoot)
+void grammarCompiler::construct(
+    pSyntaxTree pRoot,
+    LR0Grammar::statesVecType* pStatesVec,
+    LR0Grammar::transferMapVecType* pTransferMapVec)
 {
     clear();
 
@@ -43,7 +46,8 @@ const grammar &grammarCompiler::construct(pSyntaxTree pRoot)
         return false;
     });
 
-    return cfe.grammar();
+    cfe.construct(pStatesVec, pTransferMapVec);
+    //return cfe.grammar();
 }
 
 
@@ -72,11 +76,14 @@ void grammarCompiler::parseStatement(pcSyntaxTree tree)
         else if( node == _rule ){
             parseRule(pNode);
         }
+        else if( node == _attributedStatement ){
+            parseAttributedStatement(pNode);
+        }
         return false;
     });
 }
 
-void grammarCompiler::parseToken(pcSyntaxTree tree)
+lexer::tokenID grammarCompiler::parseToken(pcSyntaxTree tree)
 {
     stringType tokenName,tokenStr;
     auto visitors = overloaded(
@@ -101,9 +108,11 @@ void grammarCompiler::parseToken(pcSyntaxTree tree)
         return false;
     });
     auto ret = declareNewToken(tokenName,tokenStr);
+
+    return ret.first;
 }
 
-void grammarCompiler::parseRule(pcSyntaxTree tree)
+symbolID grammarCompiler::parseRule(pcSyntaxTree tree)
 {
     stringType producerName;
     nodeType producerID;
@@ -171,6 +180,52 @@ void grammarCompiler::parseRule(pcSyntaxTree tree)
 
     }
     while(false);
+
+    return producerID;
+}
+
+void grammarCompiler::parseAttributedStatement(pcSyntaxTree tree)
+{
+    auto iter = tree->children().begin() + 1;
+
+    auto pStatement = *(tree->children().begin());
+
+    stringType attrName;
+    auto attrNameVisitor = overloaded(
+        [this, &attrName](const lexer::tokenUnit* ptoken) {
+            if (ptoken->id == _identifier) {
+                attrName = ptoken->info.raw;
+            }
+        },
+        []([[maybe_unused]] producerType producer) {
+        }
+        );
+
+    do {
+        chainSyntaxVisit( // attribute
+            *iter,
+            [this, &attrNameVisitor](pcSyntaxTree pNode, nodeType node) {
+                if (node == nodeNotExist) {
+                    std::visit(attrNameVisitor, pNode->data());
+                }
+                return false;
+            });
+
+        chainSyntaxVisit(
+            pStatement,
+            [this, &attrName](pcSyntaxTree pNode, nodeType node) {
+                if (node == _tokenDef) {
+                    lexer::tokenID tokenID = parseToken(pNode);
+                    attrs.invoke(attrName, *this, std::vector<ParamType>{ tokenID });
+                }
+                else if (node == _rule) {
+                    parseRule(pNode);
+                }
+                return false;
+            });
+
+    } while (false);
+
 }
 
 void grammarCompiler::parseProduced(nodeType producer, pcSyntaxTree tree)
@@ -247,36 +302,11 @@ grammarCompiler::
         bool escaped)
 {
     return cfe.declareNewToken(name, str, escaped);
-    /*if ( !name.empty() && !str.empty() ){
-        lexer::tokenID id;
-        try {
-            id = customTokenTable.at(name);
-        } catch (std::out_of_range e) {
-            id = customLexer.newToken(str,escaped);
-            customTokenTable.insert(name,id);
-            return std::make_pair(id,declareState::dsSuccess);
-        }
-        return std::make_pair(id,declareState::dsRedefined);
-    }
-    return std::make_pair(nodeNotExist,declareState::dsUndefined);*/
 }
 
 std::pair<nodeType, grammarCompiler::declareState> grammarCompiler::declareNewSymbol(const stringType &name)
 {
     return cfe.declareNewSymbol(name);
-    /*if ( !name.empty() ){
-        nodeType id;
-
-        try {
-            id = customSymbolTable.at(name);
-        } catch (std::out_of_range e) {
-            id = customGrammarContainer.newSymbol();
-            customSymbolTable.insert(name,id);
-            return std::make_pair(id,declareState::dsSuccess);
-        }
-        return std::make_pair(id,declareState::dsRedefined);
-    }
-    return std::make_pair(nodeNotExist,declareState::dsUndefined);*/
 }
 
 std::pair<stringType, grammarCompiler::vtType> grammarCompiler::parseV(pcSyntaxTree tree)
@@ -378,8 +408,8 @@ void grammarCompiler::initGrammarCompiler()
     std::tie(_beforeAttr, std::ignore) = cfeOfCC.declareNewToken(L"beforeAttr", LR"(\[)");
     std::tie(_afterAttr, std::ignore) = cfeOfCC.declareNewToken(L"afterAttr", LR"(\])");
 
-    cfeOfCC.setTokenToBeIgnored(_comment);
-    cfeOfCC.setTokenToBeIgnored(_space);
+    cfeOfCC.addIgnoredToken(_comment);
+    cfeOfCC.addIgnoredToken(_space);
 
     std::tie(_grammarDef, std::ignore) = cfeOfCC.declareNewSymbol(L"grammarDef");
     std::tie(_statement, std::ignore) = cfeOfCC.declareNewSymbol(L"statement");
@@ -440,7 +470,10 @@ R"kk(
         .appendSymbol(_rule);
 
     cfeOfCC.grammar().addProduction(_statement)
-        .appendToken(_comment);
+        .appendSymbol(_attributedStatement);
+
+    /*cfeOfCC.grammar().addProduction(_statement)
+        .appendToken(_comment);*/
 
     //2 <_tokenDef> ::= _kwToken _identifier _stringConst;
     cfeOfCC.grammar().addProduction(_tokenDef)
@@ -509,16 +542,27 @@ R"kk(
     cfeOfCC.grammar().addProduction(_Vt)
         .appendToken(_stringConst);
 
+    // attribute
+    cfeOfCC.grammar().addProduction(_attribute)
+        .appendToken(_beforeAttr)
+        .appendToken(_identifier)
+        .appendToken(_afterAttr);
+
+    // _attributedStatement
+    cfeOfCC.grammar().addProduction(_attributedStatement)
+        .appendSymbol(_attribute)
+        .appendSymbol(_statement);
+
     cfeOfCC.toLexerStream(std::wcout);
     cfeOfCC.toGrammarStream(std::wcout);
 
     cfeOfCC.generateParser();
-    pGrammarParser = &cfeOfCC.parser();
+    pGrammarParser = cfeOfCC.parser();
 
     //symbolTable.insert(L"ExtendedStart",_Vt+1);
 }
 
 void grammarCompiler::initAttributes()
 {
-    attrs.declareNewAttribute("ignore", make_unique_of<attributeBase, ignoreAttr>());
+    attrs.declareNewAttribute(L"ignore", make_unique_of<attributeBase, ignoreAttr>());
 }

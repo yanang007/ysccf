@@ -252,22 +252,19 @@ void syntaxTreeWindow::toParseByTheGrammar()
         return;
     }
 
-    if( pCustomParser == nullptr ){
+    if( gm.grammarFrontend().parser() == nullptr ){
         isMerging = false;
         return;
     }
+
     auto text = pSrcRaw->document()->toPlainText().toStdWString();
-    srcTokens = gm.grammarLexer().tokenize(text);
+    auto syntaxtree = gm.grammarFrontend().parse(text);
+    srcTokens = gm.grammarFrontend().getLastTokenized();
 
     applyDecoration(srcTokens,pSrcRaw);
     isMerging = false;
 
-    if(pCustomParser == nullptr){
-        return;
-    }
-
-    LR0Grammar::parseStepVecType steps;
-    auto syntaxtree = pCustomParser->parse(srcTokens,&steps);
+    LR0Grammar::parseStepVecType steps = gm.grammarFrontend().steps;
     /*pCustomParser->printParseStepVec(std::wcout,
                                      steps,
                                      srcTokens,
@@ -295,8 +292,10 @@ void syntaxTreeWindow::toConstructGrammar()
     LR0Grammar::statesVecType states;
     if(pCustomParser != nullptr)
         delete pCustomParser;
-    pCustomParser = new LR0Grammar(LR0Grammar::analyze(gm.construct(lastParsed),&states));
-    pCustomParser->printStateVec(
+
+    gm.construct(lastParsed, &states);
+    //pCustomParser = new LR0Grammar(LR0Grammar::analyze(gm.construct(lastParsed),&states));
+    gm.grammarFrontend().parser()->printStateVec(
                 std::wcout,
                 states,
                 gm.grammarSymbolTable(),
@@ -396,7 +395,7 @@ void syntaxTreeWindow::analyzeSyntaxTree(pSyntaxTree pGrammarDef)
     }
 
     pSyntaxTree pStmt = nullptr;
-    nodeType stmtType;
+    //nodeType stmtType;
     nodeType producer;
     auto producerTell = overloaded(
         [](const lexer::tokenUnit *ptoken){

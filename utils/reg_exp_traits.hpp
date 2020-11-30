@@ -87,7 +87,7 @@ template<
     typename CharT = typename std::iterator_traits<FwdIter>::value_type>
 void regex_escape(FwdIter&& iter, EndIter&& endIter, OutIter&& outIter)
 {
-    escape<default_byte_conv<CharT>, FwdIter, EndIter, OutIter, CharT>(
+    regex_escape<default_byte_conv<CharT>, FwdIter, EndIter, OutIter, CharT>(
         std::forward<FwdIter>(iter),
         std::forward<EndIter>(endIter),
         std::forward<OutIter>(outIter)
@@ -96,7 +96,7 @@ void regex_escape(FwdIter&& iter, EndIter&& endIter, OutIter&& outIter)
 
 // 是用于regex本身的特性，类比AllocatorTraits
 // regex_traits是regex需要用到的字符特性
-// 可能需要考虑分配器？
+// 可能需要分配器？
 template<
     typename RegExT
 >

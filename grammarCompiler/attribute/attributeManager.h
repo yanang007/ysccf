@@ -11,19 +11,58 @@ public:
 	attributeManager() {}
 	~attributeManager() {}
 
-	attributeBase* getAttributeByName(const std::string& name) { 
+	enum class InvokeResult
+	{
+		irSuccessful,
+		irAttributeNotExist,
+		irWrongParameter
+	};
+
+	InvokeResult invoke(const stringType& name, grammarCompiler& g, const std::vector<ParamType>& params) {
+		if (auto pAttr = getAttributeByName(name);
+			pAttr != nullptr)
+		{
+			bool needInit = !initiatedAttributes.contains(pAttr);
+			if (needInit) {
+				if (pAttr->verify(g, params)) {
+					pAttr->init(g);
+				}
+				else {
+					return InvokeResult::irWrongParameter;
+				}
+			}
+
+			if (pAttr->invoked(g, params)) {
+				if (needInit) {
+					initiatedAttributes.insert(pAttr);
+				}
+				return InvokeResult::irSuccessful;
+			}
+			else {
+				if (needInit) {
+					pAttr->dispose(g);
+				}
+				return InvokeResult::irWrongParameter;
+			}
+		}
+
+		return InvokeResult::irAttributeNotExist;
+	}
+
+	attributeBase* getAttributeByName(const stringType& name) { 
 		if (auto iter = attrs.find(name); iter != attrs.end()) {
 			return iter->second.get();
 		}
 		return nullptr;
 	}
 
-	void declareNewAttribute(const std::string& name, upAttribute&& attr) {
+	void declareNewAttribute(const stringType& name, upAttribute&& attr) {
 		attrs.emplace(name, std::move(attr));
 	}
 
 private:
-	std::map<std::string, std::unique_ptr<attributeBase>> attrs;
+	std::map<stringType, std::unique_ptr<attributeBase>> attrs;
+	std::set<attributeBase*> initiatedAttributes;
 };
 
 #endif // ATTRIBUTE_MANAGER_H

@@ -245,6 +245,7 @@ std::unique_ptr<T> static_pointer_cast(std::unique_ptr<S>&& r)
     if (static_cast<T*>(r.get())) {
         return std::unique_ptr<T>(static_cast<T*>(r.release()));
     }
+    return std::unique_ptr<T>();
 }
 
 template<

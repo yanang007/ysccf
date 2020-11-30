@@ -6,19 +6,19 @@
 class ignoreAttr : public overloadableAttribute< OnTokenDef<> >
 {
 public:
-	/*stringViewType name() override
-	{
-		return L"ignore";
-	}*/
-
-	void init(grammarCompiler&) override
+	void init(grammarCompiler& compiler) override
 	{
 
 	}
 
 	void invoked(grammarCompiler& compiler, lexer::tokenID id) override
 	{
-		compiler.grammarFrontend().setTokenToBeIgnored(id);
+		compiler.grammarFrontend().addIgnoredToken(id);
+	}
+
+	void dispose(grammarCompiler& compiler) override
+	{
+		compiler.grammarFrontend().clearIgnores();
 	}
 };
 

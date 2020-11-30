@@ -4,8 +4,8 @@
 
 
 compilerFrontend::compilerFrontend()
-    : lexerCustomSteps(buildTokonizationPipe()),
-    parserCustomSteps(buildParsingPipe())
+    : afterTokenizing(buildTokonizationPipe()),
+    afterParsing(buildParsingPipe())
 {
 
 }
@@ -19,7 +19,7 @@ compilerFrontend::~compilerFrontend()
 void compilerFrontend::generateParser()
 {
     symbolTable().insert(L"ExtendedStart", symbolTable().size());
-    pGrammarParser = new LR0Grammar(LR0Grammar::analyze(grammar()));
+    pGrammarParser = new LR0Grammar(LR0Grammar::analyze(this->grammar()));
 }
 
 lexer::tokenStreamStorage compilerFrontend::tokenize(stringType)
@@ -30,9 +30,10 @@ lexer::tokenStreamStorage compilerFrontend::tokenize(stringType)
 pSyntaxTree compilerFrontend::parse(stringType tokenCoro)
 {
     return function_pipe(
-        std::ref(lexerCustomSteps), 
-        std::ref(parserCustomSteps),
+        std::ref(afterTokenizing), 
+        std::ref(afterParsing),
         [](pSyntaxTreeStream synStream) { 
+            // 取出最终规约的结果文法树（如果有的话）
             pSyntaxTree ret;
             for (auto p : synStream) {
                 ret = p;
@@ -42,9 +43,14 @@ pSyntaxTree compilerFrontend::parse(stringType tokenCoro)
     ) (std::move(tokenCoro));
 }
 
-void compilerFrontend::setTokenToBeIgnored(lexer::tokenID id)
+void compilerFrontend::addIgnoredToken(lexer::tokenID id)
 {
-    predefinedIgnoreAndCopyStep.ignored.insert(id);
+    _ignoreStep.ignored.insert(id);
+}
+
+void compilerFrontend::clearIgnores()
+{
+    _ignoreStep.clear();
 }
 
 std::pair<lexer::tokenID, compilerFrontend::declareState> compilerFrontend::declareNewToken(const stringType& name, const stringType& str, bool escaped)
@@ -52,7 +58,7 @@ std::pair<lexer::tokenID, compilerFrontend::declareState> compilerFrontend::decl
     if (!name.empty() && !str.empty()) {
         lexer::tokenID id;
         if (auto iter = tokenTable().find(name); !tokenTable().isEnd(iter)) {
-            id = tokenTable().at(name);
+            id = iter->second; //tokenTable().at(name);
         }
         else {
             id = lexer().newToken(str, escaped);
@@ -70,7 +76,7 @@ std::pair<nodeType, compilerFrontend::declareState> compilerFrontend::declareNew
         nodeType id;
 
         if (auto iter = symbolTable().find(name); !symbolTable().isEnd(iter)) {
-            id = symbolTable().at(name);
+            id = iter->second; // symbolTable().at(name);
         }
         else {
             id = grammar().newSymbol();

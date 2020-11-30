@@ -21,7 +21,9 @@ public:
     lexer::tokenStreamStorage tokenize(stringType);
     pSyntaxTree parse(const lexer::tokenStreamStorage &);
     pSyntaxTree parse(stringType);
-    const grammar& construct(pSyntaxTree);
+    void construct(pSyntaxTree,
+        LR0Grammar::statesVecType* pStatesVec = nullptr,
+        LR0Grammar::transferMapVecType* pTransferMapVec = nullptr);
     const grammar& lastConstruct() const { return cfe.grammar(); }
 
     compilerFrontend& grammarFrontend() { return cfe; }
@@ -38,11 +40,13 @@ public:
 
     lexer::tokenStreamStorage getLastTokenized() const { return cfeOfCC.getLastTokenized(); }
 
+
 protected:
     void analyzeParser(pcSyntaxTree tree);
     void parseStatement(pcSyntaxTree tree);
-    void parseToken(pcSyntaxTree tree);
-    void parseRule(pcSyntaxTree tree);
+    lexer::tokenID parseToken(pcSyntaxTree tree);
+    symbolID parseRule(pcSyntaxTree tree);
+    void parseAttributedStatement(pcSyntaxTree tree);
     void parseProducer(pcSyntaxTree tree);
     void parseProduced(nodeType producer,pcSyntaxTree tree);
     void parseOrProduced(nodeType producer,pcSyntaxTree tree);
@@ -84,7 +88,8 @@ protected:
         _stringConst,_comment,
         _deducer,_delimiter,_or,_space,
         _identifier,
-        _beforeAttr, _afterAttr;
+        _beforeAttr, _afterAttr,
+        _leftBracket, _rightBracket;
 
     nodeType _grammarDef,
             _statement,
