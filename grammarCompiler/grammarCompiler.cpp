@@ -408,8 +408,8 @@ void grammarCompiler::initGrammarCompiler()
     std::tie(_beforeAttr, std::ignore) = cfeOfCC.declareNewToken(L"beforeAttr", LR"(\[)");
     std::tie(_afterAttr, std::ignore) = cfeOfCC.declareNewToken(L"afterAttr", LR"(\])");
 
-    cfeOfCC.addIgnoredToken(_comment);
-    cfeOfCC.addIgnoredToken(_space);
+    cfeOfCC.ignore(_comment);
+    cfeOfCC.ignore(_space);
 
     std::tie(_grammarDef, std::ignore) = cfeOfCC.declareNewSymbol(L"grammarDef");
     std::tie(_statement, std::ignore) = cfeOfCC.declareNewSymbol(L"statement");
@@ -450,7 +450,7 @@ R"kk(
 <V> ::= <VnExpr> | <Vt> ;
 <VnExpr> ::= beforeVn <Vn> afterVn ;
 <Vn> ::= identifier ;
-<Vt> ::= identifier | identifier | kwNull | stringConst | stringConst ;  /// space deleted, need inspection
+<Vt> ::= identifier | kwNull | stringConst ;  /// space deleted, need inspection
 <ExtendedStart> ::= <grammarDef> ;
 )kk";
 
@@ -526,18 +526,12 @@ R"kk(
     cfeOfCC.grammar().addProduction(_Vn)
         .appendToken(_identifier);
 
-    //10 <_Vt> ::= _identifier | _identifier | _kwNull | _stringConst | _stringConst;
-    cfeOfCC.grammar().addProduction(_Vt)
-        .appendToken(_identifier);
-
+    //10 <_Vt> ::= _identifier | _kwNull | _stringConst;
     cfeOfCC.grammar().addProduction(_Vt)
         .appendToken(_identifier);
 
     cfeOfCC.grammar().addProduction(_Vt)
         .appendToken(_kwNull);
-
-    cfeOfCC.grammar().addProduction(_Vt)
-        .appendToken(_stringConst);
 
     cfeOfCC.grammar().addProduction(_Vt)
         .appendToken(_stringConst);

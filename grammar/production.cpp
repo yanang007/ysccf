@@ -48,7 +48,7 @@ ostreamType& production::toStream(ostreamType &os, const nameTable& symbolTable,
             os << "error: failed production";
         break;
         }
-        os << " ";
+        //os << " ";
 
     }
     return os;

@@ -100,12 +100,12 @@ public:
     const nameTable& symbolTable() const { return _symbolTable; }
     const nameTable& tokenTable() const { return _tokenTable; }
 
-    void addIgnoredToken(lexer::tokenID id);
+    void ignore(lexer::tokenID id);
     void clearIgnores();
     std::pair<lexer::tokenID, declareState> declareNewToken(const stringType& name, const stringType& str, bool escaped = false);
-    std::pair<nodeType, declareState> declareNewSymbol(const stringType& name);
+    std::pair<symbolID, declareState> declareNewSymbol(const stringType& name);
 
-    void markStart(nodeType n) { grammar().markStart(n); }
+    void markStart(symbolID n) { grammar().markStart(n); }
     bool construct(
         LR0Grammar::statesVecType* pStatesVec = nullptr,
         LR0Grammar::transferMapVecType* pTransferMapVec = nullptr

@@ -29,6 +29,7 @@ lexer::tokenStreamStorage compilerFrontend::tokenize(stringType)
 
 pSyntaxTree compilerFrontend::parse(stringType tokenCoro)
 {
+    _storageStep.clear();
     return function_pipe(
         std::ref(afterTokenizing), 
         std::ref(afterParsing),
@@ -43,7 +44,7 @@ pSyntaxTree compilerFrontend::parse(stringType tokenCoro)
     ) (std::move(tokenCoro));
 }
 
-void compilerFrontend::addIgnoredToken(lexer::tokenID id)
+void compilerFrontend::ignore(lexer::tokenID id)
 {
     _ignoreStep.ignored.insert(id);
 }
@@ -70,7 +71,7 @@ std::pair<lexer::tokenID, compilerFrontend::declareState> compilerFrontend::decl
     return std::make_pair(nodeNotExist, declareState::dsUndefined);
 }
 
-std::pair<nodeType, compilerFrontend::declareState> compilerFrontend::declareNewSymbol(const stringType& name)
+std::pair<symbolID, compilerFrontend::declareState> compilerFrontend::declareNewSymbol(const stringType& name)
 {
     if (!name.empty()) {
         nodeType id;

@@ -13,7 +13,7 @@ public:
 
 	void invoked(grammarCompiler& compiler, lexer::tokenID id) override
 	{
-		compiler.grammarFrontend().addIgnoredToken(id);
+		compiler.grammarFrontend().ignore(id);
 	}
 
 	void dispose(grammarCompiler& compiler) override
